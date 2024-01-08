@@ -266,6 +266,7 @@ class Parser:
         def term(self):
             return self.bin_op(self.factor, (TT_MUL, TT_DIV))
         
+        
         def expr(self):
             return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
         
@@ -404,10 +405,10 @@ class ParseResult:
 def run(fn, text):
     lexer = Lexer(fn, text)
     error = lexer.make_tokens()
-    return error
-    # if error: return None, error
-    # parser = Parser(tokens)
-    # ast = parser.parse()
-    
-    # return ast.node, ast.error
+    if error:
+        return None, error
+    parser = Parser(lexer.tokens)
+    ast = parser.parse()
+    return ast.node, ast.error
+
 
