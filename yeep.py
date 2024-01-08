@@ -216,9 +216,57 @@ class Parser:
         
             return res.success(left)
         
+
+#################################################################################################
+#####   ERROR
+#####   The error class is used to handle errors.
+#####   The error class is used to handle errors.
+        
+
+
+        
 #################################################################################################
 #####   PARSE RESULT
 #####   The parse result is a data structure that contains the result of the parse.
 #####   The parse result is a data structure that contains the result of the parse.
 #################################################################################################
         
+class ParseResult:
+    
+    def __init__(self):
+        self.error = None
+        self.node = None
+        self.advance_count = 0
+    
+    def register_advancement(self):
+        self.advance_count += 1
+    
+    def register(self, res):
+        self.advance_count += res.advance_count
+        if res.error: self.error = res.error
+        return res.node
+    
+    def success(self, node):
+        self.node = node
+        return self
+    
+    def failure(self, error):
+        if not self.error or self.advance_count == 0:
+            self.error = error
+        return self
+    
+#################################################################################################
+#####   RUN
+#####   The run function is the main function of the interpreter.
+#####   The run function is the main function of the interpreter.
+#################################################################################################
+    
+def run(text):
+    lexer = Lexer(text)
+    tokens, error = lexer.make_tokens()
+    if error: return None, error
+    
+    parser = Parser(tokens)
+    ast = parser.parse()
+    
+    return ast.node, ast.error
