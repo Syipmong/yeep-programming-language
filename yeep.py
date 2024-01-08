@@ -15,7 +15,7 @@ TT_DIV = 'DIV'
 TT_MUL = 'MUL'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
-TT_INT = 'TT_INT'
+TT_INT = 'INT'
 TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
 
@@ -215,7 +215,11 @@ class Parser:
                 left = BinOpNode(left, op_token, right)
         
             return res.success(left)
+        
         def parse_variable(self, token):
+            res = ParseResult()
+            self.advance()
+            return res.success(VarAccessNode(token))
             
         
 
@@ -224,7 +228,7 @@ class Parser:
 #####   The error class is used to handle errors.
 #####   The error class is used to handle errors.
 #################################################################################################
-        
+               
 
 class Error:
         
@@ -234,10 +238,13 @@ class Error:
             self.error_name = error_name
             self.details = details
         
-        def __repr__(self) -> str:
+        def as_string(self):
             result = f'{self.error_name}: {self.details}\n'
             result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
             return result
+        
+        def __repr__(self) -> str:
+            return f'{self.as_string()}'
         
 class IllegalCharError(Error):
 
@@ -249,13 +256,16 @@ class InvalidSyntaxError(Error):
         def __init__(self, pos_start, pos_end, details):
             super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
-            
-        
+class ExpectedTokenError(Error):
+     
+        def __init__(self, pos_start, pos_end, details):
+            super().__init__(pos_start, pos_end, 'Expected Token', details)
 
-        
 
 
-        
+
+
+      
 #################################################################################################
 #####   PARSE RESULT
 #####   The parse result is a data structure that contains the result of the parse.
