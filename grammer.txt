@@ -20,3 +20,42 @@
 <mul_op>        ::= '*' | '/'
 
 <unary_op>      ::= '+' | '-'
+
+
+
+Creating a formal grammar for a programming language involves specifying the syntax rules that define the structure of valid programs in the language. Here's a simple example of a context-free grammar for a basic arithmetic expression language, similar to what your interpreter is handling:
+
+php
+Copy code
+<program>      ::= <statement_list>
+
+<statement_list> ::= <statement> | <statement> ';' <statement_list>
+
+<statement>     ::= <expression>
+
+<expression>    ::= <term> | <term> <add_op> <expression>
+
+<term>          ::= <factor> | <factor> <mul_op> <term>
+
+<factor>        ::= <integer> | <float> | '(' <expression> ')' | <unary_op> <factor>
+
+<integer>       ::= [0-9]+
+
+<float>         ::= [0-9]+ '.' [0-9]+
+
+<add_op>        ::= '+' | '-'
+
+<mul_op>        ::= '*' | '/'
+
+<unary_op>      ::= '+' | '-'
+In this grammar:
+
+<program> represents a complete program.
+<statement_list> is a list of statements separated by semicolons.
+<statement> represents a single statement, which, in this case, is an expression.
+<expression> represents an arithmetic expression.
+<term> represents a term in the expression.
+<factor> represents a factor in the expression, which can be an integer, a float, a parenthesized expression, or a unary operation followed by a factor.
+<integer> and <float> represent integer and floating-point literals.
+<add_op> and <mul_op> represent addition/subtraction and multiplication/division operators.
+<unary_op> represents unary operators like positive or negative.
