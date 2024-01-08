@@ -19,6 +19,8 @@ TT_INT = 'TT_INT'
 TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
 
+Digits = '0123456789'
+
 
 class Tokens:
 
@@ -92,7 +94,7 @@ class Lexer:
             num_str = ''
             dot_count = 0
     
-            while self.current_char != None and self.current_char in '0123456789.':
+            while self.current_char != None and self.current_char in Digits:
                 if self.current_char == '.':
                     if dot_count == 1: break
                     dot_count += 1
@@ -105,4 +107,19 @@ class Lexer:
                 return Tokens(TT_INT, int(num_str))
             else:
                 return Tokens(TT_FLOAT, float(num_str))
+            
+#################################################################################################
+#####   NODES
+#####   Nodes are the building blocks of the AST.
+#####   Nodes are the data structures that represent the code.
+#####   Nodes are the data structures that represent the code.
+#################################################################################################
+            
+class NumberNode:
+        
+        def __init__(self, token):
+            self.token = token
+        
+        def __repr__(self) -> str:
+            return f'{self.token}'
 
