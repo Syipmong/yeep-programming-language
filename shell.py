@@ -1,15 +1,12 @@
 import yeep
 
-
 while True:
     text = input("yeep >> ")
     print(text)
-    error, result = yeep.run("<stdin>", text)
-    if error:
-        print(error.as_string())
+    result = yeep.run("<stdin>", text)
+
+    if isinstance(result, list):
+        for error in result:
+            print(error.as_string())
     else:
         print(result)
-
-
-
-

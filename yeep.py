@@ -346,7 +346,7 @@ class Position:
             self.idx += 1
             self.col += 1
             
-            if current_char == '\n':
+            if current_char is not None and current_char == '\n':
                 self.ln += 1
                 self.col = 0
             
@@ -403,8 +403,8 @@ class ParseResult:
 
 def run(fn, text):
     lexer = Lexer(fn, text)
-    tokens, error = lexer.make_tokens()
-    return tokens, error
+    error = lexer.make_tokens()
+    return error
     # if error: return None, error
     # parser = Parser(tokens)
     # ast = parser.parse()

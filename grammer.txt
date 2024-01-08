@@ -1,0 +1,7 @@
+<program>      ::= <statement_list>
+
+<statement_list> ::= <statement> | <statement> ';' <statement_list>
+
+<statement>     ::= <expression>
+
+<expression>    ::= <term> | <term> <add_op> <expression>
