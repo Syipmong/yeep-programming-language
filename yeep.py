@@ -1,6 +1,42 @@
 """
 This file contains the implementation of a simple programming language interpreter.
 The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
+
+To use this interpreter:
+1. Create a file called yeep.py
+2. Copy the code below into the file
+3. Run the file with python3 yeep.py
+4. Type in an expression like 2 + 2 and press enter
+5. The interpreter will print the result of the expression
+
+Tokens:
+- TT_PLUS: Represents the plus operator '+'
+- TT_MINUS: Represents the minus operator '-'
+- TT_DIV: Represents the division operator '/'
+- TT_MUL: Represents the multiplication operator '*'
+- TT_LPAREN: Represents the left parenthesis '('
+- TT_RPAREN: Represents the right parenthesis ')'
+- TT_INT: Represents an integer number
+- TT_FLOAT: Represents a floating-point number
+- TT_EOF: Represents the end of the file
+
+Classes:
+- Tokens: Represents a token with a type and optional value
+- Lexer: Converts source code into tokens
+- NumberNode: Represents a number in the abstract syntax tree (AST)
+- BinOpNode: Represents a binary operation in the AST
+- UnaryOpNode: Represents a unary operation in the AST
+- VarAccessNode: Represents a variable access in the AST
+- Parser: Converts tokens into an AST
+- Error: Base class for different types of errors
+- IllegalCharError: Represents an error for encountering an illegal character
+- InvalidSyntaxError: Represents an error for encountering invalid syntax
+- ExpectedTokenError: Represents an error for expecting a specific token
+- Position: Represents the position of a character in the source code
+"""
+"""
+This file contains the implementation of a simple programming language interpreter.
+The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
 """
 
 ################################################################################################
