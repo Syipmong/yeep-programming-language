@@ -23,7 +23,7 @@
 
 
 
-Creating a formal grammar for a programming language involves specifying the syntax rules that define the structure of valid programs in the language. Here's a simple example of a context-free grammar for a basic arithmetic expression language, similar to what your interpreter is handling:
+Creating a formal grammar for a programming language involves specifying the syntax rules that define the structure of valid programs in the language. Here's a simple example of a context-free grammar for a basic arithmetic expression language, similar to what the interpreter is handling:
 
 php
 Copy code
