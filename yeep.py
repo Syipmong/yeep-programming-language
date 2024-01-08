@@ -1,3 +1,19 @@
+"""
+This file contains the implementation of a simple programming language interpreter.
+The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
+"""
+
+################################################################################################
+#####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
+################################################################################################
+
+#################################################################################################
+#####   TOKENS
+#####   Tokens are the smallest unit of a program that have meaning.
+#####   Tokens are the words and symbols that make up a program.
+#################################################################################################
+
+...
 ################################################################################################
 #####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
 ################################################################################################
@@ -19,12 +35,12 @@ TT_INT = 'INT'
 TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
 
-Digits = '0123456789'
+Digits = '0123456789.'
 
 
 class Tokens:
 
-    def __init__(self, type, value):
+    def __init__(self, type, value=None):
         self.type = type
         self.value = value
 
@@ -133,6 +149,23 @@ class BinOpNode:
             def __repr__(self) -> str:
                 return f'({self.left_node}, {self.op_token}, {self.right_node})'
             
+class UnaryOpNode:
+                
+                def __init__(self, op_token, node):
+                    self.op_token = op_token
+                    self.node = node
+                
+                def __repr__(self) -> str:
+                    return f'({self.op_token}, {self.node})'
+                
+class VarAccessNode:
+                        
+                        def __init__(self, token):
+                            self.token = token
+                        
+                        def __repr__(self) -> str:
+                            return f'{self.token}'
+            
 #################################################################################################
 #####   PARSER
 #####   The parser takes the tokens and converts them into an AST.
@@ -220,7 +253,10 @@ class Parser:
             res = ParseResult()
             self.advance()
             return res.success(VarAccessNode(token))
+        
+
             
+       
         
 
 #################################################################################################
@@ -262,10 +298,7 @@ class ExpectedTokenError(Error):
             super().__init__(pos_start, pos_end, 'Expected Token', details)
 
 
-
-
-
-      
+ 
 #################################################################################################
 #####   PARSE RESULT
 #####   The parse result is a data structure that contains the result of the parse.
@@ -296,18 +329,21 @@ class ParseResult:
             self.error = error
         return self
     
+
+    
 #################################################################################################
 #####   RUN
 #####   The run function is the main function of the interpreter.
 #####   The run function is the main function of the interpreter.
 #################################################################################################
-    
+
 def run(text):
     lexer = Lexer(text)
     tokens, error = lexer.make_tokens()
-    if error: return None, error
+    return tokens, error
+    # if error: return None, error
+    # parser = Parser(tokens)
+    # ast = parser.parse()
     
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    return ast.node, ast.error
+    # return ast.node, ast.error
+
