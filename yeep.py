@@ -122,4 +122,23 @@ class NumberNode:
         
         def __repr__(self) -> str:
             return f'{self.token}'
+        
+class BinOpNode:
+            
+            def __init__(self, left_node, op_token, right_node):
+                self.left_node = left_node
+                self.op_token = op_token
+                self.right_node = right_node
+            
+            def __repr__(self) -> str:
+                return f'({self.left_node}, {self.op_token}, {self.right_node})'
+            
+#################################################################################################
+#####   PARSER
+#####   The parser takes the tokens and converts them into an AST.
+#####   The parser is also called a syntactic analyzer.
+#################################################################################################
+            
+class Parser:
+     
 
