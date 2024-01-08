@@ -7,16 +7,11 @@ The interpreter includes a lexer, parser, and AST nodes for performing arithmeti
 #####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
 ################################################################################################
 
-#################################################################################################
-#####   TOKENS
-#####   Tokens are the smallest unit of a program that have meaning.
-#####   Tokens are the words and symbols that make up a program.
-#################################################################################################
-
-...
-################################################################################################
-#####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
-################################################################################################
+# 1. Create a file called yeep.py
+# 2. Copy the code below into the file
+# 3. Run the file with python3 yeep.py
+# 4. Type in an expression like 2 + 2 and press enter
+# 5. The interpreter will print the result of the expression
 
 #################################################################################################
 #####   TOKENS
@@ -49,7 +44,7 @@ class Tokens:
         if self.value:
             return f'{self.type}:{self.value}'
         return f'{self.type}'
-
+    
 
 
 #################################################################################################
@@ -123,6 +118,8 @@ class Lexer:
                 return Tokens(TT_INT, int(num_str))
             else:
                 return Tokens(TT_FLOAT, float(num_str))
+            
+
             
 #################################################################################################
 #####   NODES
@@ -296,6 +293,35 @@ class ExpectedTokenError(Error):
      
         def __init__(self, pos_start, pos_end, details):
             super().__init__(pos_start, pos_end, 'Expected Token', details)
+
+
+class Position:
+     
+        def __init__(self, idx, ln, col, fn, ftxt):
+            self.idx = idx
+            self.ln = ln
+            self.col = col
+            self.fn = fn
+            self.ftxt = ftxt
+        
+        def advance(self, current_char):
+            self.idx += 1
+            self.col += 1
+            
+            if current_char == '\n':
+                self.ln += 1
+                self.col = 0
+            
+            return self
+        
+        def copy(self):
+            return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+        
+        def __repr__(self) -> str:
+            return f'{self.idx}:{self.ln}:{self.col}:{self.fn}:{self.ftxt}'
+        
+
+
 
 
  
