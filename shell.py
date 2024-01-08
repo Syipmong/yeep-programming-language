@@ -4,10 +4,12 @@ import yeep
 while True:
     text = input("yeep >> ")
     print(text)
-    result, error = yeep.run(text)
-    if error is None:
-        print(result)
-    else:
+    error, result = yeep.run("<stdin>", text)
+    if error:
         print(error.as_string())
+    else:
+        print(result)
 
-        
+
+
+

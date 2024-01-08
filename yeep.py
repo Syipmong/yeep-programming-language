@@ -55,16 +55,17 @@ class Tokens:
     
 class Lexer:
     
-        def __init__(self, text):
+        def __init__(self, fn, text):
+            self.fn = fn
             self.text = text
-            self.pos = -1
+            self.pos = Position(-1, 0, -1, fn, text )
             self.current_char = None
             self.advance()
     
     
         def advance(self):
-            self.pos += 1
-            self.current_char = self.text[self.pos] if self.pos < len(self.text) else None
+            self.pos.advance(self.current_char)
+            self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
     
     
         def make_tokens(self):
@@ -94,9 +95,10 @@ class Lexer:
                     tokens.append(Tokens(TT_RPAREN))
                     self.advance()
                 else:
+                    pos_start = self.pos.copy()
                     char = self.current_char
                     self.advance()
-                    return [], Exception(f"Illegal character '{char}'")
+                    return [], Exception(pos_start, self.pos, f"Illegal character '{char}'")
     
             return tokens, None
     
@@ -363,8 +365,8 @@ class ParseResult:
 #####   The run function is the main function of the interpreter.
 #################################################################################################
 
-def run(text):
-    lexer = Lexer(text)
+def run(fn, text):
+    lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
     return tokens, error
     # if error: return None, error
