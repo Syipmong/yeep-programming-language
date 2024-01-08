@@ -34,5 +34,75 @@ class Tokens:
 
 
 
-
+#################################################################################################
+#####   LEXER
+#####   The lexer takes the source code and converts it into tokens.
+#####   The lexer is also called a tokenizer or scanner.
+#################################################################################################
+    
+class Lexer:
+    
+        def __init__(self, text):
+            self.text = text
+            self.pos = -1
+            self.current_char = None
+            self.advance()
+    
+    
+        def advance(self):
+            self.pos += 1
+            self.current_char = self.text[self.pos] if self.pos < len(self.text) else None
+    
+    
+        def make_tokens(self):
+            tokens = []
+    
+            while self.current_char != None:
+                if self.current_char in ' \t':
+                    self.advance()
+                elif self.current_char in '0123456789':
+                    tokens.append(self.make_number())
+                elif self.current_char == '+':
+                    tokens.append(Tokens(TT_PLUS))
+                    self.advance()
+                elif self.current_char == '-':
+                    tokens.append(Tokens(TT_MINUS))
+                    self.advance()
+                elif self.current_char == '*':
+                    tokens.append(Tokens(TT_MUL))
+                    self.advance()
+                elif self.current_char == '/':
+                    tokens.append(Tokens(TT_DIV))
+                    self.advance()
+                elif self.current_char == '(':
+                    tokens.append(Tokens(TT_LPAREN))
+                    self.advance()
+                elif self.current_char == ')':
+                    tokens.append(Tokens(TT_RPAREN))
+                    self.advance()
+                else:
+                    char = self.current_char
+                    self.advance()
+                    return [], Exception(f"Illegal character '{char}'")
+    
+            return tokens, None
+    
+    
+        def make_number(self):
+            num_str = ''
+            dot_count = 0
+    
+            while self.current_char != None and self.current_char in '0123456789.':
+                if self.current_char == '.':
+                    if dot_count == 1: break
+                    dot_count += 1
+                    num_str += '.'
+                else:
+                    num_str += self.current_char
+                self.advance()
+    
+            if dot_count == 0:
+                return Tokens(TT_INT, int(num_str))
+            else:
+                return Tokens(TT_FLOAT, float(num_str))
 
