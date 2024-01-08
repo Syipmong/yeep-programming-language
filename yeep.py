@@ -65,8 +65,18 @@ TT_RPAREN = 'RPAREN'
 TT_INT = 'INT'
 TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
+TT_POWER = 'EXPONENTIAL'
 
-Digits = '0123456789.'
+
+#########################################
+###     CONSTANTS
+#########################################
+
+DEBUG = False
+DIGITS = '0123456789.'
+LETTERS = ''
+
+
 
 
 class Tokens:
@@ -90,72 +100,96 @@ class Tokens:
 #################################################################################################
     
 class Lexer:
-    
-        def __init__(self, fn, text):
-            self.fn = fn
-            self.text = text
-            self.pos = Position(-1, 0, -1, fn, text )
-            self.current_char = None
-            self.advance()
-    
-    
-        def advance(self):
-            self.pos.advance(self.current_char)
-            self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
-    
-    
-        def make_tokens(self):
-            tokens = []
-    
-            while self.current_char != None:
-                if self.current_char in ' \t':
-                    self.advance()
-                elif self.current_char in '0123456789':
-                    tokens.append(self.make_number())
-                elif self.current_char == '+':
-                    tokens.append(Tokens(TT_PLUS))
-                    self.advance()
-                elif self.current_char == '-':
-                    tokens.append(Tokens(TT_MINUS))
-                    self.advance()
-                elif self.current_char == '*':
-                    tokens.append(Tokens(TT_MUL))
-                    self.advance()
-                elif self.current_char == '/':
-                    tokens.append(Tokens(TT_DIV))
-                    self.advance()
-                elif self.current_char == '(':
-                    tokens.append(Tokens(TT_LPAREN))
-                    self.advance()
-                elif self.current_char == ')':
-                    tokens.append(Tokens(TT_RPAREN))
-                    self.advance()
-                else:
-                    pos_start = self.pos.copy()
-                    char = self.current_char
-                    self.advance()
-                    return [], Exception(pos_start, self.pos, f"Illegal character '{char}'")
-    
-            return tokens, None
-    
-    
-        def make_number(self):
-            num_str = ''
-            dot_count = 0
-    
-            while self.current_char != None and self.current_char in Digits:
-                if self.current_char == '.':
-                    if dot_count == 1: break
-                    dot_count += 1
-                    num_str += '.'
-                else:
-                    num_str += self.current_char
+    """
+    Lexer class for tokenizing input text.
+    """
+
+    def __init__(self, fn, text):
+        """
+        Initialize the Lexer object.
+
+        Parameters:
+        - fn (str): The filename or filepath associated with the input text.
+        - text (str): The input text to be tokenized.
+        """
+        self.fn = fn
+        self.text = text
+        self.pos = Position(-1, 0, -1, fn, text)
+        self.current_char = None
+        self.advance()
+
+    def advance(self):
+        """
+        Advance the current character pointer to the next character in the input text.
+        """
+        self.pos.advance(self.current_char)
+        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
+
+    def make_tokens(self):
+        """
+        Tokenize the input text and return a list of tokens.
+
+        Returns:
+        - tokens (list): A list of tokens.
+        - error (Exception or None): An error message if encountered during tokenization, or None if no error occurred.
+        """
+        tokens = []
+
+        while self.current_char is not None:
+            if self.current_char in ' \t':
                 self.advance()
-    
-            if dot_count == 0:
-                return Tokens(TT_INT, int(num_str))
+            elif self.current_char in '0123456789':
+                tokens.append(self.make_number())
+            elif self.current_char == '+':
+                tokens.append(Tokens(TT_PLUS))
+                self.advance()
+            elif self.current_char == '-':
+                tokens.append(Tokens(TT_MINUS))
+                self.advance()
+            elif self.current_char == '*':
+                tokens.append(Tokens(TT_MUL))
+                self.advance()
+            elif self.current_char == '/':
+                tokens.append(Tokens(TT_DIV))
+                self.advance()
+            elif self.current_char == '(':
+                tokens.append(Tokens(TT_LPAREN))
+                self.advance()
+            elif self.current_char == ')':
+                tokens.append(Tokens(TT_RPAREN))
+                self.advance()
             else:
-                return Tokens(TT_FLOAT, float(num_str))
+                pos_start = self.pos.copy()
+                char = self.current_char
+                self.advance()
+                return [], Exception(pos_start, self.pos, f"Illegal character '{char}'")
+
+        return tokens, None
+
+    def make_number(self):
+        """
+        Tokenize a number and return the corresponding token.
+
+        Returns:
+        - token (Tokens): The token representing the number.
+        """
+        num_str = ''
+        dot_count = 0
+
+        while self.current_char is not None and self.current_char in Digits:
+            if self.current_char == '.':
+                if dot_count == 1:
+                    break
+                dot_count += 1
+                num_str += '.'
+            else:
+                num_str += self.current_char
+            self.advance()
+
+        if dot_count == 0:
+            return Tokens(TT_INT, int(num_str))
+        else:
+            return Tokens(TT_FLOAT, float(num_str))
             
 
             
@@ -207,88 +241,109 @@ class VarAccessNode:
 #####   The parser is also called a syntactic analyzer.
 #################################################################################################
             
+# Updated Parser class with operator precedence
+
 class Parser:
-     
-        def __init__(self, tokens):
-            self.tokens = tokens
-            self.token_index = -1
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.token_index = -1
+        self.advance()
+
+    def advance(self):
+        """
+        Advances the token index and sets the current_token attribute to the next token in the list of tokens.
+        """
+        self.token_index += 1
+        self.current_token = self.tokens[self.token_index] if self.token_index < len(self.tokens) else None
+
+    def parse(self):
+        """
+        Parses the tokens and returns the resulting parse tree.
+        """
+        return self.expr()
+
+    def factor(self):
+        """
+        Parses a factor expression and returns the corresponding parse tree node.
+        """
+        res = ParseResult()
+        token = self.current_token
+
+        if token.type in (TT_PLUS, TT_MINUS):
+            res.register_advancement()
             self.advance()
-        
-        def advance(self):
-            self.token_index += 1
-            self.current_token = self.tokens[self.token_index] if self.token_index < len(self.tokens) else None
-        
-        def parse(self):
-            res = self.expr()
-            if not res.error and self.current_token.type != TT_EOF:
+            factor = res.register(self.factor())
+            if res.error:
+                return res
+            return res.success(UnaryOpNode(token, factor))
+
+        elif token.type in (TT_INT, TT_FLOAT):
+            res.register_advancement()
+            self.advance()
+            return res.success(NumberNode(token))
+
+        elif token.type == TT_LPAREN:
+            res.register_advancement()
+            self.advance()
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            if self.current_token.type == TT_RPAREN:
+                res.register_advancement()
+                self.advance()
+                return res.success(expr)
+            else:
                 return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
-                    "Expected '+', '-', '*' or '/'"
+                    "Expected ')'"
                 ))
+
+        return res.failure(InvalidSyntaxError(
+            token.pos_start, token.pos_end,
+            "Expected int or float"
+        ))
+
+    def power(self):
+        """
+        Parses a power expression and returns the corresponding parse tree node.
+        """
+        return self.bin_op(self.factor, (TT_POWER, ), self.factor)
+
+    def term(self):
+        """
+        Parses a term expression and returns the corresponding parse tree node.
+        """
+        return self.bin_op(self.power, (TT_MUL, TT_DIV), self.factor)
+
+    def expr(self):
+        """
+        Parses an expression and returns the corresponding parse tree node.
+        """
+        return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
+
+    def bin_op(self, func_a, ops, func_b):
+        """
+        Parses a binary operation expression and returns the corresponding parse tree node.
+        """
+        res = ParseResult()
+        left = res.register(func_a())
+        if res.error:
             return res
-        
-        def factor(self):
-            res = ParseResult()
-            token = self.current_token
-        
-            if token.type in (TT_PLUS, TT_MINUS):
-                res.register_advancement()
-                self.advance()
-                factor = res.register(self.factor())
-                if res.error: return res
-                return res.success(UnaryOpNode(token, factor))
-        
-            elif token.type in (TT_INT, TT_FLOAT):
-                res.register_advancement()
-                self.advance()
-                return res.success(NumberNode(token))
-        
-            elif token.type == TT_LPAREN:
-                res.register_advancement()
-                self.advance()
-                expr = res.register(self.expr())
-                if res.error: return res
-                if self.current_token.type == TT_RPAREN:
-                    res.register_advancement()
-                    self.advance()
-                    return res.success(expr)
-                else:
-                    return res.failure(InvalidSyntaxError(
-                        self.current_token.pos_start, self.current_token.pos_end,
-                        "Expected ')'"
-                    ))
-        
-            return res.failure(InvalidSyntaxError(
-                token.pos_start, token.pos_end,
-                "Expected int or float"
-            ))
-        
-        def term(self):
-            return self.bin_op(self.factor, (TT_MUL, TT_DIV))
-        
-        
-        def expr(self):
-            return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
-        
-        def bin_op(self, func, ops):
-            res = ParseResult()
-            left = res.register(func())
-            if res.error: return res
-        
-            while self.current_token.type in ops:
-                op_token = self.current_token
-                res.register_advancement()
-                self.advance()
-                right = res.register(func())
-                if res.error: return res
-                left = BinOpNode(left, op_token, right)
-        
-            return res.success(left)
-        
-        def parse_variable(self, token):
-            res = ParseResult()
+
+        while self.current_token.type in ops:
+            op_token = self.current_token
+            res.register_advancement()
             self.advance()
-            return res.success(VarAccessNode(token))
+            right = res.register(func_b())
+            if res.error:
+                return res
+            left = BinOpNode(left, op_token, right)
+
+        return res.success(left)
+    
+
+        
+        
         
 
             
