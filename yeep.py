@@ -203,6 +203,7 @@ class NumberNode:
         
         def __init__(self, token):
             self.token = token
+            
         
         def __repr__(self) -> str:
             return f'{self.token}'
@@ -606,6 +607,7 @@ class Number:
         return str(self.value)
     
     
+
         
 
     
@@ -682,7 +684,7 @@ class Interpreter:
         Returns:
             int or float: The result of the binary operation.
         """
-        if isinstance(node.right_node, tuple):  # Check if the right node is a tuple (indicating parentheses)
+        if isinstance(node.right_node, tuple):
             return self.visit(node.right_node)
         if node.op_token.type == TT_PLUS:
             return self.visit(node.left_node) + self.visit(node.right_node)
@@ -694,6 +696,7 @@ class Interpreter:
             return self.visit(node.left_node) / self.visit(node.right_node)
         elif node.op_token.type == TT_POWER:
             return self.visit(node.left_node) ** self.visit(node.right_node)
+        
 
     def visit_UnaryOpNode(self, node):
         """
@@ -771,6 +774,7 @@ def run(fn, text):
     
     # Interpret abstract syntax tree
     interpreter = Interpreter()
+    
     value = interpreter.interpret(ast)
     
     return value, None

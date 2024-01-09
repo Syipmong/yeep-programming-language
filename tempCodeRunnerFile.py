@@ -1,1 +1,1 @@
-result
+print(text)
