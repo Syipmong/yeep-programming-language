@@ -213,9 +213,15 @@ class BinOpNode:
                 self.left_node = left_node
                 self.op_token = op_token
                 self.right_node = right_node
+
             
             def __repr__(self) -> str:
                 return f'({self.left_node}, {self.op_token}, {self.right_node})'
+            
+           
+
+
+        
             
 class UnaryOpNode:
                 
@@ -228,50 +234,58 @@ class UnaryOpNode:
                 
 class VarAccessNode:
                         
-                        def __init__(self, token):
+                    def __init__(self, token):
                             self.token = token
                         
-                        def __repr__(self) -> str:
+                    def __repr__(self) -> str:
                             return f'{self.token}'
-                        def create_ast(tokens):
-                            """
-                            Creates an abstract syntax tree (AST) from a list of tokens.
+                        
 
-                            Args:
-                                tokens (list): A list of tokens.
+                    def create_ast(tokens):
+                        """
+                        Creates an abstract syntax tree (AST) from a list of tokens.
 
-                            Returns:
-                                BinOpNode: The root node of the AST.
-                            """
-                            if len(tokens) == 0:
-                                return None
+                        Args:
+                            tokens (list): A list of tokens.
 
-                            root = tokens[0]
+                        Returns:
+                            BinOpNode: The root node of the AST.
+                        """
 
-                            for i in range(len(tokens)):
-                                token = tokens[i]
-                                if token.type == TT_PLUS:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_MINUS:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_MUL:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_DIV:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_POWER:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_INT:
-                                    root = NumberNode(token)
-                                elif token.type == TT_FLOAT:
-                                    root = NumberNode(token)
-                                elif token.type == TT_LPAREN:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                                elif token.type == TT_RPAREN:
-                                    root = BinOpNode(root, token, tokens[i + 1])
+                        if len(tokens) == 0:
+                            return None
+
+                        root = tokens[0]
+
+                        for i in range(len(tokens)):
+                            token = tokens[i]
+                            if token.type == TT_PLUS:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_MINUS:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_MUL:
+                                if i + 2 < len(tokens) and tokens[i + 2].type in (TT_PLUS, TT_MINUS):
+                                    # Wrap higher precedence operation in parentheses
+                                    root = BinOpNode(root, token, (tokens[i + 1], tokens[i + 2], tokens[i + 3]))
                                 else:
-                                    raise Exception(f'Unknown token: {token}')
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_DIV:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_POWER:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_INT:
+                                root = NumberNode(token)
+                            elif token.type == TT_FLOAT:
+                                root = NumberNode(token)
+                            elif token.type == TT_LPAREN:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            elif token.type == TT_RPAREN:
+                                root = BinOpNode(root, token, tokens[i + 1])
+                            else:
+                                raise Exception(f'Unknown token: {token}')
 
-                            return root
+                        return root
+
             
 #################################################################################################
 #####   PARSER
@@ -351,6 +365,7 @@ class Parser:
         """
         Parses a term expression and returns the corresponding parse tree node.
         """
+        
         return self.bin_op(self.power, (TT_MUL, TT_DIV), self.factor)
 
     def expr(self):
@@ -553,6 +568,89 @@ class ParseResult:
         if not self.error or self.advance_count == 0:
             self.error = error
         return self
+    
+
+#################################################################################################
+#####   INTERPRETER
+#####   The interpreter takes the AST and executes the code.
+#####   The interpreter takes the AST and executes the code.
+#################################################################################################
+    
+class Interpreter:
+    """
+    The interpreter class is used to interpret the AST.
+    """
+    
+    def visit(self, node):
+        """
+        Visits a node in the AST and interprets it.
+        
+        Args:
+            node (Any): The node to visit.
+        
+        Returns:
+            Any: The result of interpreting the node.
+        """
+        method_name = f'visit_{type(node).__name__}'
+        method = getattr(self, method_name, self.no_visit_method)
+        return method(node)
+    
+    def no_visit_method(self, node):
+        """
+        Raises an exception if no visit method is found for a node.
+        
+        Args:
+            node (Any): The node that does not have a visit method.
+        
+        Raises:
+            Exception: Raised when no visit method is found for a node.
+        """
+        raise Exception(f'No visit_{type(node).__name__} method defined')
+    
+    def visit_NumberNode(self, node):
+        """
+        Interprets a number node.
+        
+        Args:
+            node (NumberNode): The number node to interpret.
+        
+        Returns:
+            int or float: The value of the number node.
+        """
+        return node.token.value
+    
+    def visit_BinOpNode(self, node):
+        """
+        Interprets a binary operation node.
+        
+        Args:
+            node (BinOpNode): The binary operation node to interpret.
+        
+        Returns:
+            int or float: The result of the binary operation.
+        """
+        if node.op_token.type == TT_PLUS:
+            return self.visit(node.left_node) + self.visit(node.right_node)
+        elif node.op_token.type == TT_MINUS:
+            return self.visit(node.left_node) - self.visit(node.right_node)
+        elif node.op_token.type == TT_MUL:
+            return self.visit(node.left_node) * self.visit(node.right_node)
+        elif node.op_token.type == TT_DIV:
+            return self.visit(node.left_node) / self.visit(node.right_node)
+        elif node.op_token.type == TT_POWER:
+            return self.visit(node.left_node) ** self.visit(node.right_node)
+    
+    def interpret(self, node):
+        """
+        Interprets the AST.
+        
+        Args:
+            node (Any): The root node of the AST.
+        
+        Returns:
+            int or float: The result of interpreting the AST.
+        """
+        return self.visit(node)
     
 
     

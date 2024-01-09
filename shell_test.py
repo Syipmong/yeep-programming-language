@@ -5,14 +5,13 @@ print("Programme Written and Developed by Yipmong Said")
 while True:
     text = input("yeep >> ")
     print(text)
-    result = yeep.run("<stdin>", text)
 
-    if isinstance(result, list):
-        for error in result:
-            print(error.as_string())
+    ast, error = yeep.run("<stdin>", text)
+
+    if error:
+        print(error)
     else:
-        print(result)
+        print(ast)
 
-    
     if text == "exit()":
         break
