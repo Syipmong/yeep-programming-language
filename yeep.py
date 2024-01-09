@@ -233,6 +233,45 @@ class VarAccessNode:
                         
                         def __repr__(self) -> str:
                             return f'{self.token}'
+                        def create_ast(tokens):
+                            """
+                            Creates an abstract syntax tree (AST) from a list of tokens.
+
+                            Args:
+                                tokens (list): A list of tokens.
+
+                            Returns:
+                                BinOpNode: The root node of the AST.
+                            """
+                            if len(tokens) == 0:
+                                return None
+
+                            root = tokens[0]
+
+                            for i in range(len(tokens)):
+                                token = tokens[i]
+                                if token.type == TT_PLUS:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_MINUS:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_MUL:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_DIV:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_POWER:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_INT:
+                                    root = NumberNode(token)
+                                elif token.type == TT_FLOAT:
+                                    root = NumberNode(token)
+                                elif token.type == TT_LPAREN:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                elif token.type == TT_RPAREN:
+                                    root = BinOpNode(root, token, tokens[i + 1])
+                                else:
+                                    raise Exception(f'Unknown token: {token}')
+
+                            return root
             
 #################################################################################################
 #####   PARSER
@@ -339,13 +378,6 @@ class Parser:
             left = BinOpNode(left, op_token, right)
 
         return res.success(left)
-    
-
-        
-        
-        
-
-            
        
         
 
@@ -444,10 +476,6 @@ class Position:
         """
         return f'{self.idx}:{self.ln}:{self.col}:{self.fn}:{self.ftxt}'
         
-
-
-
-
  
 #################################################################################################
 #####   PARSE RESULT
