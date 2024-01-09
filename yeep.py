@@ -141,28 +141,30 @@ class Lexer:
             elif self.current_char in '0123456789':
                 tokens.append(self.make_number())
             elif self.current_char == '+':
-                tokens.append(Tokens(TT_PLUS))
+                tokens.append(Tokens(TT_PLUS, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '-':
-                tokens.append(Tokens(TT_MINUS))
+                tokens.append(Tokens(TT_MINUS, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '*':
-                tokens.append(Tokens(TT_MUL))
+                tokens.append(Tokens(TT_MUL, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '/':
-                tokens.append(Tokens(TT_DIV))
+                tokens.append(Tokens(TT_DIV, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '(':
-                tokens.append(Tokens(TT_LPAREN))
+                tokens.append(Tokens(TT_LPAREN, pos_start= self.pos))
                 self.advance()
             elif self.current_char == ')':
-                tokens.append(Tokens(TT_RPAREN))
+                tokens.append(Tokens(TT_RPAREN, pos_start= self.pos))
                 self.advance()
             else:
                 pos_start = self.pos.copy()
                 char = self.current_char
                 self.advance()
                 return [], Exception(pos_start, self.pos, f"Illegal character '{char}'")
+
+        tokens.append(Tokens(TT_EOF, pos_start = self.pos))
 
         return tokens, None
 
@@ -173,10 +175,12 @@ class Lexer:
         Returns:
         - token (Tokens): The token representing the number.
         """
+
         num_str = ''
         dot_count = 0
+        pos_start = self.pos.copy()
 
-        while self.current_char is not None and self.current_char in Digits:
+        while self.current_char is not None and self.current_char in DIGITS:
             if self.current_char == '.':
                 if dot_count == 1:
                     break
@@ -187,9 +191,9 @@ class Lexer:
             self.advance()
 
         if dot_count == 0:
-            return Tokens(TT_INT, int(num_str))
+            return Tokens(TT_INT, int(num_str), pos_start, self.pos)
         else:
-            return Tokens(TT_FLOAT, float(num_str))
+            return Tokens(TT_FLOAT, float(num_str), pos_start, self.pos)
             
 
             
