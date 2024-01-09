@@ -204,6 +204,9 @@ class NumberNode:
         def __init__(self, token):
             self.token = token
             
+            self.pos_start = self.token.pos_start
+            self.pos_end = self.token.pos_end
+
         
         def __repr__(self) -> str:
             return f'{self.token}'
@@ -214,6 +217,9 @@ class BinOpNode:
                 self.left_node = left_node
                 self.op_token = op_token
                 self.right_node = right_node
+
+                self.pos_start = self.left_node.pos_start
+                self.pos_end = self.right_node.pos_end
 
             
             def __repr__(self) -> str:
@@ -229,9 +235,15 @@ class UnaryOpNode:
                 def __init__(self, op_token, node):
                     self.op_token = op_token
                     self.node = node
+
+                    self.pos_start = self.op_token.pos_start
+                    self.pos_end = node.pos_end
+
                 
                 def __repr__(self) -> str:
                     return f'({self.op_token}, {self.node})'
+                
+
                 
 class VarAccessNode:
                         
@@ -458,7 +470,7 @@ class InvalidSyntaxError(Error):
         details (str): Additional details about the error.
     """
 
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 class ExpectedTokenError(Error):
@@ -471,8 +483,26 @@ class ExpectedTokenError(Error):
         details (str): Additional details about the error.
     """
      
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Expected Token', details)
+
+class RTError(Error):
+    """
+    Represents an error that occurs during runtime.
+    
+    Attributes:
+        pos_start (Position): The starting position of the error.
+        pos_end (Position): The ending position of the error.
+        details (str): Additional details about the error.
+        context (Context): The context of the error.
+    """
+     
+    def __init__(self, pos_start, pos_end, details=''):
+        super().__init__(pos_start, pos_end, 'Runtime Error', details)
+        
+        
+
+    
 
 
 class Position:
@@ -569,6 +599,54 @@ class ParseResult:
         if not self.error or self.advance_count == 0:
             self.error = error
         return self
+    
+#################################################################################################
+#####   RUNTIME RESULT
+#####   The runtime result is a data structure that contains the result of the runtime.
+#####   The runtime result is a data structure that contains the result of the runtime.
+#################################################################################################
+    
+class RuntimeResult:
+    """
+    Represents the result of a runtime operation.
+    
+    Attributes:
+        value (Any): The value of the runtime operation.
+        error (str): An error message if the runtime operation encountered an error, otherwise None.
+    """
+    
+    def __init__(self):
+        self.value = None
+        self.error = None
+    
+    def register(self, res):
+        if res.error: self.error = res.error
+        return res.value
+    
+    def success(self, value):
+        self.value = value
+        return self
+    
+    def failure(self, error):
+        self.error = error
+        return self
+    
+    def should_return(self):
+        return self.error or self.value
+    
+    def __repr__(self) -> str:
+        return f'{self.value}, {self.error}'
+    
+
+    
+
+#################################################################################################
+#####      VALUES
+#####      The values are the data types that the interpreter can handle.
+#####      The values are the data types that the interpreter can handle.
+#################################################################################################
+    
+
 
 
 
@@ -597,14 +675,80 @@ class Number:
     def divided_by(self, other):
         if isinstance(other, Number):
             if other.value == 0:
-                return None, IllegalCharError(
-                    self.pos_start, other.pos_end,
+                return None, RTError(
+                    other.pos_start, other.pos_end,
                     'Division by zero'
                 )
+                # return None, IllegalCharError(
+                #     self.pos_start, other.pos_end,
+                #     'Division by zero'
+                # )
             return Number(self.value / other.value).set_pos(self.pos_start, other.pos_end), None
         
     def __repr__(self):
         return str(self.value)
+    
+
+
+
+#################################################################################################
+#####   CONTEXT
+#####   The context is the environment in which the interpreter executes the code.
+#####   The context is the environment in which the interpreter executes the code.
+#################################################################################################
+    
+class Context:
+    """
+    The context class is used to store variables.
+    """
+
+    def __init__(self, display_name, parent=None, parent_entry_pos=None):
+        """
+        Initialize the context object.
+
+        Args:
+            display_name (str): The name of the context.
+            parent (Context, optional): The parent context. Defaults to None.
+            parent_entry_pos (Position, optional): The position of the parent context. Defaults to None.
+        """
+        self.display_name = display_name
+        self.parent = parent
+        self.parent_entry_pos = parent_entry_pos
+        self.symbol_table = {}
+
+    def get(self, var_name):
+        """
+        Gets the value of a variable.
+
+        Args:
+            var_name (str): The name of the variable.
+
+        Returns:
+            Any: The value of the variable.
+        """
+        value = self.symbol_table.get(var_name, None)
+        if value is None and self.parent:
+            return self.parent.get(var_name)
+        return value
+
+    def set(self, var_name, value):
+        """
+        Sets the value of a variable.
+
+        Args:
+            var_name (str): The name of the variable.
+            value (Any): The value of the variable.
+        """
+        self.symbol_table[var_name] = value
+
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the context.
+
+        Returns:
+            str: The string representation of the context.
+        """
+        return f'{self.symbol_table}'
     
     
 
@@ -623,7 +767,7 @@ class Interpreter:
     The interpreter class is used to interpret the AST.
     """
 
-    def visit(self, node):
+    def visit(self, node, context):
         """
         Visits a node in the AST and interprets it.
 
@@ -635,7 +779,7 @@ class Interpreter:
         """
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
-        return method(node)
+        return method(node, context)
 
     def no_visit_method(self, node):
         """
@@ -684,6 +828,7 @@ class Interpreter:
         Returns:
             int or float: The result of the binary operation.
         """
+
         if isinstance(node.right_node, tuple):
             return self.visit(node.right_node)
         if node.op_token.type == TT_PLUS:
@@ -693,10 +838,15 @@ class Interpreter:
         elif node.op_token.type == TT_MUL:
             return self.visit(node.left_node) * self.visit(node.right_node)
         elif node.op_token.type == TT_DIV:
-            return self.visit(node.left_node) / self.visit(node.right_node)
+            right_value = self.visit(node.right_node)
+            if right_value == 0:
+                pos_start = node.right_node.pos_start
+                pos_end = node.right_node.pos_end
+                return None, RTError(pos_start, pos_end, 'Division by zero')
+            return self.visit(node.left_node) / right_value
         elif node.op_token.type == TT_POWER:
             return self.visit(node.left_node) ** self.visit(node.right_node)
-        
+
 
     def visit_UnaryOpNode(self, node):
         """
@@ -774,7 +924,7 @@ def run(fn, text):
     
     # Interpret abstract syntax tree
     interpreter = Interpreter()
-    
-    value = interpreter.interpret(ast)
+    context = context("<program>")
+    value = interpreter.interpret(ast, context)
     
     return value, None

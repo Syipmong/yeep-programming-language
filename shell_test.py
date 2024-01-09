@@ -4,7 +4,9 @@ print("Yeep Programming Language")
 print("Programme Written and Developed by Yipmong Said")
 while True:
     text = input("yeep >> ")
-    print(text)
+    
+    if text == "exit()":
+        break
 
     ast, error = yeep.run("<stdin>", text)
 
@@ -12,6 +14,3 @@ while True:
         print(error)
     else:
         print(ast)
-
-    if text == "exit()":
-        break
