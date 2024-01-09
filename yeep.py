@@ -389,35 +389,74 @@ class Parser:
                
 
 class Error:
+    """
+    Represents an error that occurred during the execution of a program.
+    
+    Attributes:
+        pos_start (Position): The starting position of the error.
+        pos_end (Position): The ending position of the error.
+        error_name (str): The name of the error.
+        details (str): Additional details about the error.
+    """
         
-        def __init__(self, pos_start, pos_end, error_name, details):
-            self.pos_start = pos_start
-            self.pos_end = pos_end
-            self.error_name = error_name
-            self.details = details
+    def __init__(self, pos_start, pos_end, error_name, details):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        self.error_name = error_name
+        self.details = details
         
-        def as_string(self):
-            result = f'{self.error_name}: {self.details}\n'
-            result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
-            return result
+    def as_string(self):
+        """
+        Returns a string representation of the error.
         
-        def __repr__(self) -> str:
-            return f'{self.as_string()}'
+        Returns:
+            str: The string representation of the error.
+        """
+        result = f'{self.error_name}: {self.details}\n'
+        result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+        return result
+        
+    def __repr__(self) -> str:
+        return f'{self.as_string()}'
         
 class IllegalCharError(Error):
+    """
+    Error raised when an illegal character is encountered.
 
-        def __init__(self, pos_start, pos_end, details):
-            super().__init__(pos_start, pos_end, 'Illegal Character', details)
+    Attributes:
+        pos_start (Position): The start position of the illegal character.
+        pos_end (Position): The end position of the illegal character.
+        details (str): Additional details about the error.
+    """
+
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
 class InvalidSyntaxError(Error):
+    """
+    Represents an error that occurs when there is invalid syntax in the code.
+    
+    Attributes:
+        pos_start (Position): The starting position of the error.
+        pos_end (Position): The ending position of the error.
+        details (str): Additional details about the error.
+    """
 
-        def __init__(self, pos_start, pos_end, details):
-            super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 class ExpectedTokenError(Error):
+    """
+    Represents an error that occurs when an expected token is missing or incorrect.
+    
+    Attributes:
+        pos_start (Position): The starting position of the error.
+        pos_end (Position): The ending position of the error.
+        details (str): Additional details about the error.
+    """
      
-        def __init__(self, pos_start, pos_end, details):
-            super().__init__(pos_start, pos_end, 'Expected Token', details)
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Expected Token', details)
 
 
 class Position:
@@ -488,9 +527,9 @@ class ParseResult:
     Represents the result of a parsing operation.
     
     Attributes:
-        error: An error message if the parsing operation encountered an error, otherwise None.
-        node: The parsed node if the parsing operation was successful, otherwise None.
-        advance_count: The number of tokens advanced during the parsing operation.
+        error (str): An error message if the parsing operation encountered an error, otherwise None.
+        node (Any): The parsed node if the parsing operation was successful, otherwise None.
+        advance_count (int): The number of tokens advanced during the parsing operation.
     """
     
     def __init__(self):
