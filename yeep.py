@@ -580,55 +580,70 @@ class Interpreter:
     """
     The interpreter class is used to interpret the AST.
     """
-    
+
     def visit(self, node):
         """
         Visits a node in the AST and interprets it.
-        
+
         Args:
             node (Any): The node to visit.
-        
+
         Returns:
             Any: The result of interpreting the node.
         """
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
         return method(node)
-    
+
     def no_visit_method(self, node):
         """
         Raises an exception if no visit method is found for a node.
-        
+
         Args:
             node (Any): The node that does not have a visit method.
-        
+
         Raises:
             Exception: Raised when no visit method is found for a node.
         """
         raise Exception(f'No visit_{type(node).__name__} method defined')
     
+    def visit_ParseResult(self, node):
+        """
+        Visits a ParseResult node.
+
+        Args:
+            node (ParseResult): The ParseResult node to visit.
+
+        Returns:
+            Any: The result of visiting the underlying node.
+        """
+        return self.visit(node.node)
+
+
     def visit_NumberNode(self, node):
         """
         Interprets a number node.
-        
+
         Args:
             node (NumberNode): The number node to interpret.
-        
+
         Returns:
             int or float: The value of the number node.
         """
         return node.token.value
-    
+
     def visit_BinOpNode(self, node):
         """
         Interprets a binary operation node.
-        
+
         Args:
             node (BinOpNode): The binary operation node to interpret.
-        
+
         Returns:
             int or float: The result of the binary operation.
         """
+        if isinstance(node.right_node, tuple):  # Check if the right node is a tuple (indicating parentheses)
+            return self.visit(node.right_node)
         if node.op_token.type == TT_PLUS:
             return self.visit(node.left_node) + self.visit(node.right_node)
         elif node.op_token.type == TT_MINUS:
@@ -639,18 +654,49 @@ class Interpreter:
             return self.visit(node.left_node) / self.visit(node.right_node)
         elif node.op_token.type == TT_POWER:
             return self.visit(node.left_node) ** self.visit(node.right_node)
-    
+
+    def visit_UnaryOpNode(self, node):
+        """
+        Interprets a unary operation node.
+
+        Args:
+            node (UnaryOpNode): The unary operation node to interpret.
+
+        Returns:
+            int or float: The result of the unary operation.
+        """
+        if node.op_token.type == TT_PLUS:
+            return +self.visit(node.node)
+        elif node.op_token.type == TT_MINUS:
+            return -self.visit(node.node)
+
+    def no_visit_method(self, node):
+        """
+        Raises an exception if no visit method is found for a node.
+
+        Args:
+            node (Any): The node that does not have a visit method.
+
+        Raises:
+            Exception: Raised when no visit method is found for a node.
+        """
+        raise Exception(f'No visit_{type(node).__name__} method defined')
+
     def interpret(self, node):
         """
         Interprets the AST.
-        
+
         Args:
             node (Any): The root node of the AST.
-        
+
         Returns:
             int or float: The result of interpreting the AST.
         """
         return self.visit(node)
+    
+
+
+
     
 
     
@@ -659,25 +705,32 @@ class Interpreter:
 #####   The run function is the main function of the interpreter.
 #####   The run function is the main function of the interpreter.
 #################################################################################################
-
+    
 def run(fn, text):
     """
-    Executes the given code by performing lexical analysis, tokenization, and parsing.
-
+    Runs the interpreter on the input text.
+    
     Args:
-        fn (str): The filename or path of the source code file.
-        text (str): The source code to be executed.
-
+        fn (str): The filename or filepath associated with the input text.
+        text (str): The input text to be interpreted.
+    
     Returns:
-        tuple: A tuple containing the abstract syntax tree (AST) node and any error encountered during parsing.
-               If no error occurred, the error value will be None.
+        Any: The result of interpreting the input text.
     """
+    # Generate tokens
     lexer = Lexer(fn, text)
-    error = lexer.make_tokens()
-    if error:
-        return None, error
-    parser = Parser(lexer.tokens)
+    tokens, error = lexer.make_tokens()
+    
+    if error: return None, error
+    
+    # Generate abstract syntax tree
+    parser = Parser(tokens)
     ast = parser.parse()
-    return ast.node, ast.error
-
-
+    
+    if ast.error: return None, ast.error
+    
+    # Interpret abstract syntax tree
+    interpreter = Interpreter()
+    value = interpreter.interpret(ast)
+    
+    return value, None
