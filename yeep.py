@@ -43,11 +43,6 @@ The interpreter includes a lexer, parser, and AST nodes for performing arithmeti
 #####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
 ################################################################################################
 
-# 1. Create a file called yeep.py
-# 2. Copy the code below into the file
-# 3. Run the file with python3 yeep.py
-# 4. Type in an expression like 2 + 2 and press enter
-# 5. The interpreter will print the result of the expression
 
 #################################################################################################
 #####   TOKENS
@@ -74,22 +69,22 @@ TT_POWER = 'EXPONENTIAL'
 
 DEBUG = False
 DIGITS = '0123456789.'
-LETTERS = ''
 
 
 
 
 class Tokens:
-
-    def __init__(self, type, value=None):
+    def __init__(self, type, value=None, pos_start=None, pos_end=None):
         self.type = type
         self.value = value
-
+        self.pos_start = pos_start
+        self.pos_end = pos_end
 
     def __repr__(self) -> str:
         if self.value:
             return f'{self.type}:{self.value}'
         return f'{self.type}'
+
     
 
 
@@ -175,7 +170,6 @@ class Lexer:
         Returns:
         - token (Tokens): The token representing the number.
         """
-
         num_str = ''
         dot_count = 0
         pos_start = self.pos.copy()
@@ -194,6 +188,7 @@ class Lexer:
             return Tokens(TT_INT, int(num_str), pos_start, self.pos)
         else:
             return Tokens(TT_FLOAT, float(num_str), pos_start, self.pos)
+
             
 
             
@@ -394,29 +389,60 @@ class ExpectedTokenError(Error):
 
 
 class Position:
+    """
+    Represents a position in a file.
+    
+    Attributes:
+        idx (int): The index of the position.
+        ln (int): The line number of the position.
+        col (int): The column number of the position.
+        fn (str): The file name.
+        ftxt (str): The file text.
+    """
      
-        def __init__(self, idx, ln, col, fn, ftxt):
-            self.idx = idx
-            self.ln = ln
-            self.col = col
-            self.fn = fn
-            self.ftxt = ftxt
+    def __init__(self, idx, ln, col, fn, ftxt):
+        self.idx = idx
+        self.ln = ln
+        self.col = col
+        self.fn = fn
+        self.ftxt = ftxt
+    
+    def advance(self, current_char = None):
+        """
+        Advances the position by one character.
         
-        def advance(self, current_char):
-            self.idx += 1
-            self.col += 1
-            
-            if current_char is not None and current_char == '\n':
-                self.ln += 1
-                self.col = 0
-            
-            return self
+        Args:
+            current_char (str, optional): The current character. Defaults to None.
         
-        def copy(self):
-            return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+        Returns:
+            Position: The updated position.
+        """
+        self.idx += 1
+        self.col += 1
         
-        def __repr__(self) -> str:
-            return f'{self.idx}:{self.ln}:{self.col}:{self.fn}:{self.ftxt}'
+        if current_char is not None and current_char == '\n':
+            self.ln += 1
+            self.col = 0
+        
+        return self
+    
+    def copy(self):
+        """
+        Creates a copy of the position.
+        
+        Returns:
+            Position: The copied position.
+        """
+        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+    
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the position.
+        
+        Returns:
+            str: The string representation of the position.
+        """
+        return f'{self.idx}:{self.ln}:{self.col}:{self.fn}:{self.ftxt}'
         
 
 
@@ -430,6 +456,14 @@ class Position:
 #################################################################################################
         
 class ParseResult:
+    """
+    Represents the result of a parsing operation.
+    
+    Attributes:
+        error: An error message if the parsing operation encountered an error, otherwise None.
+        node: The parsed node if the parsing operation was successful, otherwise None.
+        advance_count: The number of tokens advanced during the parsing operation.
+    """
     
     def __init__(self):
         self.error = None
@@ -462,6 +496,17 @@ class ParseResult:
 #################################################################################################
 
 def run(fn, text):
+    """
+    Executes the given code by performing lexical analysis, tokenization, and parsing.
+
+    Args:
+        fn (str): The filename or path of the source code file.
+        text (str): The source code to be executed.
+
+    Returns:
+        tuple: A tuple containing the abstract syntax tree (AST) node and any error encountered during parsing.
+               If no error occurred, the error value will be None.
+    """
     lexer = Lexer(fn, text)
     error = lexer.make_tokens()
     if error:
