@@ -116,6 +116,55 @@ TT_LIST = 'LIST'
 DEBUG = False
 DIGITS = '0123456789.'
 
+# Unintegrated keywords and tokens
+
+LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+LETTERS_DIGITS = LETTERS + DIGITS
+WHITE_SPACES = '\t\n\r \x0b\f'
+KEYWORDS = [
+    'VAR',
+    'AND',
+    'OR',
+    'NOT',
+    'IF',
+    'THEN',
+    'ELIF',
+    'ELSE',
+    'FOR',
+    'TO',
+    'STEP',
+    'WHILE',
+    'FUN',
+    'END',
+    'RETURN',
+    'CONTINUE',
+    'BREAK',
+    'USE',
+    'AS',
+    'FROM',
+    'IMPORT',
+    'EXPORT',
+    'CLASS',
+    'PUBLIC',
+    'PRIVATE',
+    'PROTECTED',
+    'STATIC',
+    'ABSTRACT',
+    'INTERFACE',
+    'EXTENDS',
+    'IMPLEMENTS',
+    'NEW',
+    'THIS',
+    'SUPER',
+    'TRY',
+    'CATCH',
+    'FINALLY',
+    'THROW',
+    'NULL',
+    'TRUE',
+    'FALSE',
+]
+
 
 
 
