@@ -860,6 +860,15 @@ class Context:
 class Interpreter:
     """
     The interpreter class is used to interpret the AST.
+
+    Methods:
+        visit(node, context): Visits a node in the AST and interprets it.
+        no_visit_method(node): Raises an exception if no visit method is found for a node.
+        visit_ParseResult(node): Visits a ParseResult node.
+        visit_NumberNode(node): Interprets a number node.
+        visit_BinOpNode(node): Interprets a binary operation node.
+        visit_UnaryOpNode(node): Interprets a unary operation node.
+        interpret(node): Interprets the AST.
     """
 
     def visit(self, node, context):
@@ -868,6 +877,7 @@ class Interpreter:
 
         Args:
             node (Any): The node to visit.
+            context (Any): The context in which the node is being visited.
 
         Returns:
             Any: The result of interpreting the node.
