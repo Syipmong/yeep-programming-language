@@ -62,6 +62,52 @@ TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
 TT_POWER = 'EXPONENTIAL'
 
+# Yet to be integrated Tokens in additions to the ones above and meanings
+
+TT_EQ = 'EQ' # Equal to
+TT_EE = 'EE' # Double equal to
+TT_NE = 'NE' # Not equal to
+TT_LT = 'LT' # Less than
+TT_GT = 'GT' # Greater than
+TT_LTE = 'LTE' # Less than or equal to
+TT_GTE = 'GTE' # Greater than or equal to
+TT_KEYWORD = 'KEYWORD' # Keyword
+TT_IDENTIFIER = 'IDENTIFIER' # Identifier
+TT_STRING = 'STRING' # String
+TT_ARROW = 'ARROW' # Arrow
+TT_NEWLINE = 'NEWLINE' # Newline
+TT_INDENT = 'INDENT' # Indent
+TT_DEDENT = 'DEDENT' # Dedent
+TT_EOF = 'EOF' # End of file
+
+
+
+# Data Type Tokens
+
+TT_INT = 'INT' # Integer
+TT_FLOAT = 'FLOAT' # Float
+TT_STRING = 'STRING' # String
+TT_CHAR = 'CHAR' # Character
+TT_BOOL = 'BOOL' # Boolean
+TT_LIST = 'LIST' # List
+
+
+
+# Variable Tokens
+
+TT_INT = 'INT'
+TT_FLOAT = 'FLOAT'
+TT_STRING = 'STRING'
+TT_CHAR = 'CHAR'
+TT_BOOL = 'BOOL'
+TT_LIST = 'LIST'
+
+
+
+
+
+
+
 
 #########################################
 ###     CONSTANTS

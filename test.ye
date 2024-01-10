@@ -1,0 +1,10 @@
+Get time as t
+
+let func myName(){
+    str name = "John Doe";
+    int age = 30;
+
+}
+
+
+print(myName())
