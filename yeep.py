@@ -784,10 +784,6 @@ class Number:
                     other.pos_start, other.pos_end,
                     'Division by zero'
                 )
-                # return None, IllegalCharError(
-                #     self.pos_start, other.pos_end,
-                #     'Division by zero'
-                # )
             return Number(self.value / other.value).set_pos(self.pos_start, other.pos_end), None
         
     def __repr__(self):
