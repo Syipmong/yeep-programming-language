@@ -393,6 +393,9 @@ class VarAccessNode:
                                 raise Exception(f'Unknown token: {token}')
 
                         return root
+                    
+
+
 
             
 #################################################################################################
@@ -594,10 +597,17 @@ class RTError(Error):
      
     def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
-        
-        
 
-    
+
+
+
+
+
+#################################################################################################
+#####   POSITION
+#####   The position class is used to keep track of the position of a character in a file.
+#####   The position class is used to keep track of the position of a character in a file.
+#################################################################################################
 
 
 class Position:
@@ -782,6 +792,210 @@ class Number:
         
     def __repr__(self):
         return str(self.value)
+    
+class String:
+    def __init__(self, value):
+        self.value = value
+    
+    def added_to(self, other):
+        if isinstance(other, String):
+            return String(self.value + other.value).set_pos(self.pos_start, other.pos_end), None
+        
+    def __repr__(self):
+        return f'"{self.value}"'
+    
+class List:
+    def __init__(self, elements):
+        self.elements = elements
+    
+    def added_to(self, other):
+        new_list = self.copy()
+        new_list.elements.append(other)
+        return new_list, None
+    
+    def subtracted_by(self, other):
+        if isinstance(other, Number):
+            new_list = self.copy()
+            try:
+                new_list.elements.pop(other.value)
+                return new_list, None
+            except:
+                return None, RTError(
+                    other.pos_start, other.pos_end,
+                    'Element at this index could not be removed from list because index is out of bounds',
+                )
+    
+    def multiplied_by(self, other):
+        if isinstance(other, List):
+            new_list = self.copy()
+            new_list.elements.extend(other.elements)
+            return new_list, None
+        
+    def divided_by(self, other):
+        if isinstance(other, Number):
+            try:
+                return self.elements[other.value], None
+            except:
+                return None, RTError(
+                    other.pos_start, other.pos_end,
+                    'Element at this index could not be retrieved from list because index is out of bounds',
+                )
+    
+    def copy(self):
+        return List(self.elements[:])
+    
+    def __repr__(self):
+        return f'[{", ".join([str(x) for x in self.elements])}]'
+    
+class BaseFunction:
+    def __init__(self, name):
+        self.name = name or '<anonymous>'
+    
+    def generate_new_context(self):
+        new_context = Context(self.name, self.context, self.context.parent_entry_pos)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        return new_context
+    
+    def check_args(self, arg_names, args):
+        res = RuntimeResult()
+        if len(args) > len(arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f'{len(args) - len(arg_names)} too many args passed into {self}',
+            ))
+        if len(args) < len(arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f'{len(arg_names) - len(args)} too few args passed into {self}',
+            ))
+        return res.success(None)
+    
+    def populate_args(self, arg_names, args, exec_ctx):
+        for i in range(len(args)):
+            arg_name = arg_names[i]
+            arg_value = args[i]
+            arg_value.set_context(exec_ctx)
+            exec_ctx.symbol_table.set(arg_name, arg_value)
+    
+    def check_and_populate_args(self, arg_names, args, exec_ctx):
+        res = RuntimeResult()
+        res.register(self.check_args(arg_names, args))
+        if res.error: return res
+        self.populate_args(arg_names, args, exec_ctx)
+        return res.success(None)
+    
+class Function(BaseFunction):
+    def __init__(self, name, body_node, arg_names):
+        super().__init__(name)
+        self.body_node = body_node
+        self.arg_names = arg_names
+    
+    def execute(self, args):
+        res = RuntimeResult()
+        interpreter = Interpreter()
+        exec_ctx = self.generate_new_context()
+        
+        res.register(self.check_and_populate_args(self.arg_names, args, exec_ctx))
+        if res.error: return res
+        
+        value = res.register(interpreter.visit(self.body_node, exec_ctx))
+        if res.error: return res
+        return res.success(value)
+    
+    def copy(self):
+        copy = Function(self.name, self.body_node, self.arg_names)
+        copy.set_context(self.context)
+        copy.set_pos(self.pos_start, self.pos_end)
+        return copy
+    
+    def __repr__(self):
+        return f'<function {self.name}>'
+    
+class BuiltInFunction(BaseFunction):
+    def __init__(self, name):
+        super().__init__(name)
+    
+    def execute(self, args):
+        res = RuntimeResult()
+        exec_ctx = self.generate_new_context()
+        method_name = f'execute_{self.name}'
+        method = getattr(self, method_name, self.no_visit_method)
+        res.register(self.check_and_populate_args(method.arg_names, args, exec_ctx))
+        if res.error: return res
+        return_value = res.register(method(exec_ctx))
+        if res.error: return res
+        return res.success(return_value)
+    
+    def no_visit_method(self, node):
+        raise Exception(f'No execute_{self.name} method defined')
+    
+    def copy(self):
+        copy = BuiltInFunction(self.name)
+        copy.set_context(self.context)
+        copy.set_pos(self.pos_start, self.pos_end)
+        return copy
+    
+    def __repr__(self):
+        return f'<built-in function {self.name}>'
+    
+    def execute_PRINT(self, exec_ctx):
+        print(str(exec_ctx.symbol_table.get('value')))
+        return RuntimeResult().success(Number.null)
+    execute_PRINT.arg_names = ['value']
+    
+    def execute_PRINT_RET(self, exec_ctx):
+        return RuntimeResult().success(String(str(exec_ctx.symbol_table.get('value'))))
+    execute_PRINT_RET.arg_names = ['value']
+    
+    def execute_INPUT(self, exec_ctx):
+        text = input()
+        return RuntimeResult().success(String(text))
+    execute_INPUT.arg_names = []
+    
+    def execute_INPUT_INT(self, exec_ctx):
+        while True:
+            text = input()
+            try:
+                number = int(text)
+                break
+            except ValueError:
+                print(f"'{text}' must be an integer. Try again!")
+        return RuntimeResult().success(Number(number))
+    execute_INPUT_INT.arg_names = []
+    
+    def execute_CLEAR(self, exec_ctx):
+        os.system('cls' if os.name == 'nt' else 'clear')
+        return RuntimeResult().success(Number.null)
+    execute_CLEAR.arg_names = []
+    
+    def execute_IS_NUMBER(self, exec_ctx):
+        is_number = isinstance(exec_ctx.symbol_table.get('value'), Number)
+        return RuntimeResult().success(Number.true if is_number else Number.false)
+    execute_IS_NUMBER.arg_names = ['value']
+    
+    def execute_IS_STRING(self, exec_ctx):
+        is_number = isinstance(exec_ctx.symbol_table.get('value'), String)
+        return RuntimeResult().success(Number(true if is_number else Number.false))
+    
+    def execute_IS_LIST(self, exec_ctx):
+        is_number = isinstance(exec_ctx.symbol_table.get('value'), List)
+        return RuntimeResult().success(Number(true if is_number else Number.false))
+    
+    def execute_IS_FUNCTION(self, exec_ctx):
+        is_number = isinstance(exec_ctx.symbol_table.get('value'), BaseFunction)
+        return RuntimeResult().success(Number(True if is_number else Number.false))
+    
+    def execute_APPEND(self, exec_ctx):
+        list_ = exec_ctx.symbol_table.get('list')
+        value = exec_ctx.symbol_table.get('value')
+        if not isinstance(list_, List):
+            return RuntimeResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                'First argument must be list',
+                exec_ctx
+            ))
+        list_.elements.append(value)
+        return RuntimeResult().success(Number.null)
     
 
 
