@@ -789,6 +789,8 @@ class Number:
     def __repr__(self):
         return str(self.value)
     
+
+    
 class String:
     def __init__(self, value):
         self.value = value
@@ -842,6 +844,9 @@ class List:
     
     def __repr__(self):
         return f'[{", ".join([str(x) for x in self.elements])}]'
+    
+
+
     
 class BaseFunction:
     def __init__(self, name):
@@ -992,6 +997,10 @@ class BuiltInFunction(BaseFunction):
             ))
         list_.elements.append(value)
         return RuntimeResult().success(Number.null)
+    
+
+
+
     
 
 
