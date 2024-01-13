@@ -1,56 +1,3 @@
-import os
-
-"""
-This file contains the implementation of a simple programming language interpreter.
-The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
-
-To use this interpreter:
-1. Create a file called yeep.py
-2. Copy the code below into the file
-3. Run the file with python3 yeep.py
-4. Type in an expression like 2 + 2 and press enter
-5. The interpreter will print the result of the expression
-
-Tokens:
-- TT_PLUS: Represents the plus operator '+'
-- TT_MINUS: Represents the minus operator '-'
-- TT_DIV: Represents the division operator '/'
-- TT_MUL: Represents the multiplication operator '*'
-- TT_LPAREN: Represents the left parenthesis '('
-- TT_RPAREN: Represents the right parenthesis ')'
-- TT_INT: Represents an integer number
-- TT_FLOAT: Represents a floating-point number
-- TT_EOF: Represents the end of the file
-
-Classes:
-- Tokens: Represents a token with a type and optional value
-- Lexer: Converts source code into tokens
-- NumberNode: Represents a number in the abstract syntax tree (AST)
-- BinOpNode: Represents a binary operation in the AST
-- UnaryOpNode: Represents a unary operation in the AST
-- VarAccessNode: Represents a variable access in the AST
-- Parser: Converts tokens into an AST
-- Error: Base class for different types of errors
-- IllegalCharError: Represents an error for encountering an illegal character
-- InvalidSyntaxError: Represents an error for encountering invalid syntax
-- ExpectedTokenError: Represents an error for expecting a specific token
-- Position: Represents the position of a character in the source code
-"""
-"""
-This file contains the implementation of a simple programming language interpreter.
-The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
-"""
-
-################################################################################################
-#####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
-################################################################################################
-
-
-#################################################################################################
-#####   TOKENS
-#####   Tokens are the smallest unit of a program that have meaning.
-#####   Tokens are the words and symbols that make up a program.
-#################################################################################################
 
 
 TT_PLUS = 'PLUS'
@@ -64,46 +11,9 @@ TT_FLOAT = 'FLOAT'
 TT_EOF = 'EOF'
 TT_POWER = 'EXPONENTIAL'
 
-# Yet to be integrated Tokens in additions to the ones above and meanings
-
-TT_EQ = 'EQ' # Equal to
-TT_EE = 'EE' # Double equal to
-TT_NE = 'NE' # Not equal to
-TT_LT = 'LT' # Less than
-TT_GT = 'GT' # Greater than
-TT_LTE = 'LTE' # Less than or equal to
-TT_GTE = 'GTE' # Greater than or equal to
-TT_KEYWORD = 'KEYWORD' # Keyword
-TT_IDENTIFIER = 'IDENTIFIER' # Identifier
-TT_STRING = 'STRING' # String
-TT_ARROW = 'ARROW' # Arrow
-TT_NEWLINE = 'NEWLINE' # Newline
-TT_INDENT = 'INDENT' # Indent
-TT_DEDENT = 'DEDENT' # Dedent
-TT_EOF = 'EOF' # End of file
 
 
 
-# Data Type Tokens
-
-TT_INT = 'INT' # Integer
-TT_FLOAT = 'FLOAT' # Float
-TT_STRING = 'STRING' # String
-TT_CHAR = 'CHAR' # Character
-TT_BOOL = 'BOOL' # Boolean
-TT_LIST = 'LIST' # List
-
-
-
-# Variable Tokens
-
-TT_INT = 'INT'
-TT_FLOAT = 'FLOAT'
-TT_STRING = 'STRING'
-TT_CHAR = 'CHAR'
-TT_BOOL = 'BOOL'
-TT_VOID = 'VOID'
-TT_LIST = 'LIST'
 
 
 
@@ -117,57 +27,6 @@ TT_LIST = 'LIST'
 
 DEBUG = False
 DIGITS = '0123456789.'
-
-# Unintegrated keywords and tokens
-
-LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-LETTERS_DIGITS = LETTERS + DIGITS
-WHITE_SPACES = '\t\n\r \x0b\f'
-KEYWORDS = [
-    'VAR',
-    'AND',
-    'OR',
-    'NOT',
-    'IF',
-    'THEN',
-    'ELIF',
-    'ELSE',
-    'FOR',
-    'TO',
-    'STEP',
-    'WHILE',
-    'FUN',
-    'END',
-    'RETURN',
-    'CONTINUE',
-    'BREAK',
-    'USE',
-    'AS',
-    'FROM',
-    'IMPORT',
-    'EXPORT',
-    'CLASS',
-    'PUBLIC',
-    'PRIVATE',
-    'PROTECTED',
-    'STATIC',
-    'ABSTRACT',
-    'INTERFACE',
-    'EXTENDS',
-    'IMPLEMENTS',
-    'NEW',
-    'THIS',
-    'SUPER',
-    'TRY',
-    'CATCH',
-    'FINALLY',
-    'THROW',
-    'NULL',
-    'TRUE',
-    'FALSE',
-]
-
-
 
 
 class Tokens:
@@ -847,28 +706,6 @@ class List:
     def __repr__(self):
         return f'[{", ".join([str(x) for x in self.elements])}]'
     
-class SymbolTable:
-    def __init__(self, parent=None):
-        self.symbols = {}
-        self.parent = parent
-    
-    def get(self, name):
-        value = self.symbols.get(name, None)
-        if value is None and self.parent:
-            return self.parent.get(name)
-        return value
-    
-    def set(self, name, value):
-        self.symbols[name] = value
-    
-    def remove(self, name):
-        del self.symbols[name]
-    
-    def __repr__(self):
-        return f'{self.symbols}'
-    
-
-    
 
 
     
@@ -1000,11 +837,11 @@ class BuiltInFunction(BaseFunction):
     
     def execute_IS_STRING(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get('value'), String)
-        return RuntimeResult().success(Number(True if is_number else Number.false))
+        return RuntimeResult().success(Number(true if is_number else Number.false))
     
     def execute_IS_LIST(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get('value'), List)
-        return RuntimeResult().success(Number(True if is_number else Number.false))
+        return RuntimeResult().success(Number(true if is_number else Number.false))
     
     def execute_IS_FUNCTION(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get('value'), BaseFunction)
