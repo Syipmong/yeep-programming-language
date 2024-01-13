@@ -766,6 +766,7 @@ class Number:
         self.pos_start = pos_start
         self.pos_end = pos_end
         return self
+    
 
     def added_to(self, other):
         if isinstance(other, Number):
@@ -1152,19 +1153,21 @@ class Interpreter:
             Any: The result of visiting the underlying node.
         """
         return self.visit(node.node)
-
-
-    def visit_NumberNode(self, node):
+    
+    def visit_NumberNode(self, node, context):
         """
         Interprets a number node.
 
         Args:
             node (NumberNode): The number node to interpret.
+            context (Context): The context in which the number node is being interpreted.
 
         Returns:
-            int or float: The value of the number node.
+            Number: The result of interpreting the number node.
         """
-        return node.token.value
+        return RuntimeResult().success(
+            Number(node.token.value).set_pos(node.pos_start, node.pos_end)
+        )
 
     def visit_BinOpNode(self, node):
         """
@@ -1272,7 +1275,6 @@ def run(fn, text):
     
     # Interpret abstract syntax tree
     interpreter = Interpreter()
-    context = context("<program>")
-    value = interpreter.interpret(ast, context)
-    
-    return value, None
+    context = Context("<program>")
+    result = interpreter.visit(ast.node, context)
+    return result
