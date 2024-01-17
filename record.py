@@ -26,5 +26,3 @@ project_info = {
     
 }
 
-
-print(project_info)
