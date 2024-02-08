@@ -1,10 +1,10 @@
 Get time as t
 
-let func myName(){
+let func myName(int n){
     str name = "John Doe";
     int age = 30;
 
 }
 
 
-print(myName())
+print(myName(n))
