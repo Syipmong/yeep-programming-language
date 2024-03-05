@@ -2,6 +2,9 @@
 
 This is a simple programming language interpreter for basic arithmetic operations. The interpreter includes a lexer, parser, and abstract syntax tree (AST) nodes for performing arithmetic operations.
 
+### ext
+.yep and .yep
+
 ## Getting Started
 
 1. Create a file called `yeep.py`.
