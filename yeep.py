@@ -81,6 +81,7 @@ TT_NEWLINE = 'NEWLINE' # Newline
 TT_INDENT = 'INDENT' # Indent
 TT_DEDENT = 'DEDENT' # Dedent
 TT_EOF = 'EOF' # End of file
+TT_SEMI = 'SEMI' # Semicolon
 
 
 
@@ -125,18 +126,23 @@ LETTERS_DIGITS = LETTERS + DIGITS
 WHITE_SPACES = '\t\n\r \x0b\f'
 KEYWORDS = [
     'VAR',
+    'INT'
+    'FLOAT',
+    'STRING',
+    'CHAR',
+    'BOOL',
     'AND',
     'OR',
     'NOT',
     'IF',
     'THEN',
-    'ELIF',
     'ELSE',
+    'ELIF'
     'FOR',
     'TO',
     'STEP',
     'WHILE',
-    'FUN',
+    'FUNC',
     'END',
     'RETURN',
     'CONTINUE',
@@ -174,8 +180,18 @@ class Tokens:
     def __init__(self, type, value=None, pos_start=None, pos_end=None):
         self.type = type
         self.value = value
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+
+        if pos_start:
+            self.pos_start = pos_start.copy()
+            self.pos_end = pos_start.copy()
+            self.pos_end.advance()
+
+            if pos_end:
+                self.pos_end = pos_end.copy()
+            
+
+    def matches(self, type, value):
+        return self.type == type and self.value == value
 
     def __repr__(self) -> str:
         if self.value:
@@ -230,6 +246,11 @@ class Lexer:
         while self.current_char is not None:
             if self.current_char in ' \t':
                 self.advance()
+            elif self.current_char in LETTERS:
+                tokens.append(self.make_identifier())
+            elif self.current_char == ';':
+                tokens.append(Tokens(TT_SEMI, pos_start= self.pos))
+                self.advance()
             elif self.current_char in '0123456789':
                 tokens.append(self.make_number())
             elif self.current_char == '+':
@@ -243,6 +264,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == '/':
                 tokens.append(Tokens(TT_DIV, pos_start= self.pos))
+                self.advance()
+            elif self.current_char == '=':
+                tokens.append(Tokens(TT_EQ, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Tokens(TT_LPAREN, pos_start= self.pos))
@@ -259,7 +283,7 @@ class Lexer:
         tokens.append(Tokens(TT_EOF, pos_start = self.pos))
 
         return tokens, None
-
+   
     def make_number(self):
         """
         Tokenize a number and return the corresponding token.
@@ -285,9 +309,44 @@ class Lexer:
             return Tokens(TT_INT, int(num_str), pos_start, self.pos)
         else:
             return Tokens(TT_FLOAT, float(num_str), pos_start, self.pos)
+        
+    def make_identifier(self):
+        """
+        Tokenize an identifier and return the corresponding token.
 
+        Returns:
+        - token (Tokens): The token representing the identifier.
+        """
+        id_str = ''
+        pos_start = self.pos.copy()
+
+        while self.current_char is not None and self.current_char in LETTERS_DIGITS:
+            id_str += self.current_char
+            self.advance()
+
+        tok_type = TT_KEYWORD if id_str in KEYWORDS else TT_IDENTIFIER
+        return Tokens(tok_type, id_str, pos_start, self.pos)
+    
+    def skip_comment(self):
+        """
+        Skip a comment until the end of the line.
+        """
+        # Assert that we are at the start of a comment
+        assert self.current_char == '#'
+        while self.current_char != '\n':
+            self.advance()
             
+    def check_keyword(self, id_str):
+        """
+        Check whether `id_str` matches a keyword. If it does, consume the rest of the word and return a keyword token.
+        Check whether `id_str` matches a keyword. If it does, consume the rest of the word and return a keyword token.
+        """
+        if self.pos.i + len(id_str) < len(self.text):
+            next_char = self.text[self.pos.i + len(id_str)]
+            if next_char in DIGITS + LETTERS:
+                return Tokens(TT_IDENTIFIER, id_str, self.pos.copy(), self.pos.copy().advance(len(id_str)))
 
+        
             
 #################################################################################################
 #####   NODES
@@ -426,6 +485,7 @@ class Parser:
         Parses the tokens and returns the resulting parse tree.
         """
         return self.expr()
+    
 
     def factor(self):
         """
@@ -485,6 +545,31 @@ class Parser:
         """
         Parses an expression and returns the corresponding parse tree node.
         """
+        res = ParseResult()
+        if self.current_token.matches(TT_KEYWORD, 'VAR'):
+            res.register(self.advance())  # Advance to VAR keyword
+            if self.current_token.type != TT_IDENTIFIER:
+                res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    f'Expected identifier'
+                ))
+            var_name = self.current_token
+            
+            res.register(self.advance())  # Advance to identifier
+            if not self.current_token.matches(TT_EQ, None):
+                res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    f'Expected ='
+                ))
+
+            equals_sign = self.current_token
+            exp = res.register(self.advance())  # Advance to equals sign
+            val = res.register(self.expr())  # Advance to expression
+
+            if res.error:
+                return res
+            return res.success(VarAssignNode(var_name, val))
+
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
 
     def bin_op(self, func_a, ops, func_b):
@@ -881,6 +966,11 @@ class BaseFunction:
         new_context = Context(self.name, self.context, self.context.parent_entry_pos)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
         return new_context
+    
+    def set_context(self, context):
+        self.context = context
+        self.pos_start = self.context.pos_start
+        self.pos_end = self.context.pos_end
     
     def check_args(self, arg_names, args):
         res = RuntimeResult()
