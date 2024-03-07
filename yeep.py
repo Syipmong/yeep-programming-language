@@ -607,21 +607,28 @@ class Parser:
             var_name = self.current_token
             
             res.register(self.advance())  # Advance to identifier
-            if not self.current_token.matches(TT_EQ, None):
+            if self.current_token.matches != TT_EQ:
                 res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     f'Expected ='
                 ))
-
-            equals_sign = self.current_token
-            exp = res.register(self.advance())  # Advance to equals sign
-            val = res.register(self.expr())  # Advance to expression
-
-            if res.error:
-                return res
-            return res.success(VarAssignNode(var_name, val))
-
+            res.register(self.advance())  # Advance to equals sign
+            exp = res.register(self.expr())  # Advance to expression
+            if res.error: return res
+            return res.success(VarAssignNode(var_name, exp))
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
+            # if res.error:
+            #     return res
+
+            # equals_sign = self.current_token
+            # exp = res.register(self.advance())  # Advance to equals sign
+        #     val = res.register(self.expr())  # Advance to expression
+
+        #     if res.error:
+        #         return res
+        #     return res.success(VarAssignNode(var_name, val))
+
+        # return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
 
     def bin_op(self, func_a, ops, func_b):
         """
@@ -1270,6 +1277,8 @@ class Interpreter:
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
+    
+
 
     def no_visit_method(self, node):
         """
@@ -1283,7 +1292,7 @@ class Interpreter:
         """
         raise Exception(f'No visit_{type(node).__name__} method defined')
     
-    def visit_ParseResult(self, node):
+    def visit_ParseResult(self, node, context):
         """
         Visits a ParseResult node.
 
@@ -1293,7 +1302,21 @@ class Interpreter:
         Returns:
             Any: The result of visiting the underlying node.
         """
-        return self.visit(node.node)
+        return self.visit(node.node, context)
+    
+    # def visit_ParseResult(self, node):
+    #     """
+    #     Visits a ParseResult node.
+
+    #     Args:
+    #         node (ParseResult): The ParseResult node to visit.
+
+    #     Returns:
+    #         Any: The result of visiting the underlying node.
+    #     """
+    #     return self.visit(node.node)
+
+
     
     def visit_NumberNode(self, node, context):
         """
@@ -1309,6 +1332,12 @@ class Interpreter:
         return RuntimeResult().success(
             Number(node.token.value).set_pos(node.pos_start, node.pos_end)
         )
+    
+    # def visit_NumberNode(self, node):
+    #     """
+    #     Calls `visit_NumberNode` and returns the result.
+
+    #     This method exists because Python does not support method overloading.
 
     def visit_VarAccessNode(self,  node, context):
         """
@@ -1334,8 +1363,26 @@ class Interpreter:
             ))
         value = value.copy().set_pos(node.pos_start, node.pos_end)
         return res.success(value)
+    
+    def visit_VarAssignNode(self, node, context):
+        """
+        Interprets a variable assignment node.
 
-    def visit_BinOpNode(self, node):
+        Args:
+            node (VarAssignNode): The variable assignment node to interpret.
+            context (Context): The context in which the variable assignment node is being interpreted.
+
+        Returns:
+            Any: The value of the variable.
+        """
+        res = RuntimeResult()
+        var_name = node.var_name_token.value
+        value = res.register(self.visit(node.value_node, context))
+        if res.error: return res
+        context.symbol_table.set(var_name, value)
+        return res.success(value)
+
+    def visit_BinOpNode(self, node,  context):
         """
         Interprets a binary operation node.
 
@@ -1345,27 +1392,37 @@ class Interpreter:
         Returns:
             int or float: The result of the binary operation.
         """
-
-        if isinstance(node.right_node, tuple):
-            return self.visit(node.right_node)
-        if node.op_token.type == TT_PLUS:
-            return self.visit(node.left_node) + self.visit(node.right_node)
-        elif node.op_token.type == TT_MINUS:
-            return self.visit(node.left_node) - self.visit(node.right_node)
-        elif node.op_token.type == TT_MUL:
-            return self.visit(node.left_node) * self.visit(node.right_node)
-        elif node.op_token.type == TT_DIV:
-            right_value = self.visit(node.right_node)
-            if right_value == 0:
-                pos_start = node.right_node.pos_start
-                pos_end = node.right_node.pos_end
-                return None, RTError(pos_start, pos_end, 'Division by zero')
-            return self.visit(node.left_node) / right_value
-        elif node.op_token.type == TT_POWER:
-            return self.visit(node.left_node) ** self.visit(node.right_node)
-
-
-    def visit_UnaryOpNode(self, node):
+        res = RuntimeResult()
+        left = res.register(self.visit(node.left_node, context))
+        if res.error: return res
+        right = res.register(self.visit(node.right_node, context))
+        if res.error: return res
+        
+        try:
+            if node.op_token.type == TT_PLUS:
+                return res.success(left.added_to(right))
+            elif node.op_token.type == TT_MINUS:
+                return res.success(left.subtracted_by(right))
+            elif node.op_token.type == TT_MUL:
+                return res.success(left.multiplied_by(right))
+            elif node.op_token.type == TT_DIV:
+                return res.success(left.divided_by(right))
+            elif node.op_token.type == TT_POWER:
+                return res.success(left.power(right))
+            else:
+                return res.failure(RTError(
+                    node.pos_start, node.pos_end,
+                    'Invalid operation',
+                    context
+                ))
+        except ZeroDivisionError:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                'Division by zero',
+                context
+            ))
+        
+    def visit_UnaryOpNode(self, node, context):
         """
         Interprets a unary operation node.
 
@@ -1375,10 +1432,28 @@ class Interpreter:
         Returns:
             int or float: The result of the unary operation.
         """
-        if node.op_token.type == TT_PLUS:
-            return +self.visit(node.node)
-        elif node.op_token.type == TT_MINUS:
-            return -self.visit(node.node)
+        res = RuntimeResult()
+        number = res.register(self.visit(node.node, context))
+        if res.error: return res
+        error = None
+        if node.op_token.type == TT_MINUS:
+            number, error = number.multiplied_by(Number(-1))
+        return res.success(number) if not error else res.failure(error)
+
+    # def visit_UnaryOpNode(self, node):
+    #     """
+    #     Interprets a unary operation node.
+
+    #     Args:
+    #         node (UnaryOpNode): The unary operation node to interpret.
+
+    #     Returns:
+    #         int or float: The result of the unary operation.
+    #     """
+    #     if node.op_token.type == TT_PLUS:
+    #         return +self.visit(node.node)
+    #     elif node.op_token.type == TT_MINUS:
+    #         return -self.visit(node.node)
 
     def no_visit_method(self, node):
         """
@@ -1416,6 +1491,10 @@ class Interpreter:
 #####   The run function is the main function of the interpreter.
 #################################################################################################
     
+global_symbol_table = SymbolTable()
+global_symbol_table.set("NULL", Number(0))
+
+
 def run(fn, text):
     """
     Runs the interpreter on the input text.
@@ -1430,17 +1509,18 @@ def run(fn, text):
     # Generate tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    
+
     if error: return None, error
-    
+
     # Generate abstract syntax tree
     parser = Parser(tokens)
     ast = parser.parse()
-    
+
     if ast.error: return None, ast.error
-    
+
     # Interpret abstract syntax tree
     interpreter = Interpreter()
     context = Context("<program>")
+    context.symbol_table = global_symbol_table
     result = interpreter.visit(ast.node, context)
     return result
