@@ -1,4 +1,4 @@
-import rev
+import yeep
 
 print("Yeep Programming Language")
 print("Programme Written and Developed by Yipmong Said")
@@ -8,7 +8,7 @@ while True:
     if text == "exit()":
         break
 
-    ast, error = rev.run("<stdin>", text)
+    ast, error = yeep.run("<stdin>", text)
 
     if error:
         print(error)

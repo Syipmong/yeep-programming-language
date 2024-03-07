@@ -405,6 +405,9 @@ class VarAccessNode:
                         
                     def __init__(self, token):
                             self.token = token
+
+                            self.pos_start = self.token.pos_start
+                            self.pos_end = self.token.pos_end
                         
                     def __repr__(self) -> str:
                             return f'{self.token}'
@@ -457,6 +460,20 @@ class VarAccessNode:
                     
 
 
+class VarAssignNode:
+    def __init__(self, var_name_token, value_node):
+        self.var_name_token = var_name_token
+        self.value_node = value_node
+
+        self.pos_start = self.var_name_token.pos_start
+        self.pos_end = self.value_node.pos_end
+
+    def __repr__(self) -> str:
+        return f'({self.var_name_token}, {self.value_node})'
+
+
+
+
 
             
 #################################################################################################
@@ -479,6 +496,40 @@ class Parser:
         """
         self.token_index += 1
         self.current_token = self.tokens[self.token_index] if self.token_index < len(self.tokens) else None
+
+    def atom(self):
+        """
+        Parses an atom expression and returns the corresponding parse tree node.
+        """
+        res = ParseResult()
+        # If it starts with a parenthesis, it should be a parenthesis expression
+        token = self.current_token
+
+        if token.type in (TT_INT, TT_FLOAT):
+            res.register(self.advance())
+            return res.success(NumberNode(token))
+        elif token.type == TT_IDENTIFIER:
+            res.register(self.advance())
+            return res.success(VarAccessNode(token))
+        
+        elif token.type == TT_LPAREN:
+            res.register(self.advance())
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            if self.current_token.type == TT_RPAREN:
+                res.register(self.advance())
+                return res.success(expr)
+            else:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected ')'"
+                ))
+        return res.failure(InvalidSyntaxError(
+            token.pos_start, token.pos_end,
+            "Expected int or float"
+        ))
+
 
     def parse(self):
         """
