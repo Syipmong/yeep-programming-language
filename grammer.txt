@@ -21,33 +21,6 @@
 
 <unary_op>      ::= '+' | '-'
 
-
-
-Creating a formal grammar for a programming language involves specifying the syntax rules that define the structure of valid programs in the language. Here's a simple example of a context-free grammar for a basic arithmetic expression language, similar to what the interpreter is handling:
-
-<program>      ::= <statement_list>
-
-<statement_list> ::= <statement> | <statement> ';' <statement_list>
-
-<statement>     ::= <expression>
-
-<expression>    ::= <term> | <term> <add_op> <expression>
-
-<term>          ::= <factor> | <factor> <mul_op> <term>
-
-<factor>        ::= <integer> | <float> | '(' <expression> ')' | <unary_op> <factor>
-
-<integer>       ::= [0-9]+
-
-<float>         ::= [0-9]+ '.' [0-9]+
-
-<add_op>        ::= '+' | '-'
-
-<mul_op>        ::= '*' | '/'
-
-<unary_op>      ::= '+' | '-'
-
-
 In this grammar:
 
 <program> represents a complete program.

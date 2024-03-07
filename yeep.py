@@ -1310,6 +1310,31 @@ class Interpreter:
             Number(node.token.value).set_pos(node.pos_start, node.pos_end)
         )
 
+    def visit_VarAccessNode(self,  node, context):
+        """
+        Interprets a variable access node.
+
+        Args:
+            node (VarAccessNode): The variable access node to interpret.
+            context (Context): The context in which the variable access node is being interpreted.
+
+        Returns:
+            Any: The value of the variable.
+        """
+        res = RuntimeResult()
+        var_name = node.token.value
+        value = context.symbol_table.get(
+            var_name,
+        )
+        if value is None:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                f"'{var_name}' is not defined",
+                context
+            ))
+        value = value.copy().set_pos(node.pos_start, node.pos_end)
+        return res.success(value)
+
     def visit_BinOpNode(self, node):
         """
         Interprets a binary operation node.
