@@ -255,7 +255,7 @@ class Lexer:
                 tokens.append(Tokens(TT_DIV, pos_start= self.pos))
                 self.advance()
             elif self.current_char == '=':
-                tokens.append(Tokens(TT_EQ, pos_start= self.pos))
+                tokens.append(self.make_equals())
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Tokens(TT_LPAREN, pos_start= self.pos))
@@ -272,6 +272,21 @@ class Lexer:
         tokens.append(Tokens(TT_EOF, pos_start = self.pos))
 
         return tokens, None
+    
+    def make_equals(self):
+        """
+        Tokenize an equals sign and return the corresponding token.
+
+        Returns:
+        - token (Tokens): The token representing the equals sign.
+        """
+        pos_start = self.pos.copy()
+
+        if self.current_char == '=':
+            self.advance()
+            return Tokens(TT_EQ, pos_start=pos_start, pos_end=self.pos)
+        else:
+            return Tokens(TT_EE, pos_start=pos_start, pos_end=self.pos)
    
     def make_number(self):
         """
@@ -587,15 +602,16 @@ class Parser:
             var_name = self.current_token
             
             res.register(self.advance())  # Advance to identifier
-            if self.current_token.matches != TT_EQ:
-                res.failure(InvalidSyntaxError(
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    f'Expected ='
-                ))
-            res.register(self.advance())  # Advance to equals sign
-            exp = res.register(self.expr())  # Advance to expression
-            if res.error: return res
-            return res.success(VarAssignNode(var_name, exp))
+            if self.current_token is not None and TT_EQ is not None:
+                if not self.current_token.matches(TT_EQ):
+                    res.failure(InvalidSyntaxError(
+                        self.current_token.pos_start, self.current_token.pos_end,
+                        f'Expected ='
+                    ))
+                    res.register(self.advance())  # Advance to equals sign
+                    exp = res.register(self.expr())  # Advance to expression
+                    if res.error: return res
+                return res.success(VarAssignNode(var_name, exp))
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
             # if res.error:
             #     return res
