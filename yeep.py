@@ -84,7 +84,6 @@ TT_EOF = 'EOF' # End of file
 TT_SEMI = 'SEMI' # Semicolon
 
 
-
 # Data Type Tokens
 
 TT_INT = 'INT' # Integer
@@ -93,7 +92,6 @@ TT_STRING = 'STRING' # String
 TT_CHAR = 'CHAR' # Character
 TT_BOOL = 'BOOL' # Boolean
 TT_LIST = 'LIST' # List
-
 
 
 # Variable Tokens
@@ -105,11 +103,6 @@ TT_CHAR = 'CHAR'
 TT_BOOL = 'BOOL'
 TT_VOID = 'VOID'
 TT_LIST = 'LIST'
-
-
-
-
-
 
 
 #########################################
@@ -174,8 +167,6 @@ KEYWORDS = [
 ]
 
 
-
-
 class Tokens:
     def __init__(self, type, value=None, pos_start=None, pos_end=None):
         self.type = type
@@ -198,15 +189,13 @@ class Tokens:
             return f'{self.type}:{self.value}'
         return f'{self.type}'
 
-    
-
 
 #################################################################################################
 #####   LEXER
 #####   The lexer takes the source code and converts it into tokens.
 #####   The lexer is also called a tokenizer or scanner.
 #################################################################################################
-    
+
 class Lexer:
     """
     Lexer class for tokenizing input text.
@@ -346,15 +335,14 @@ class Lexer:
             if next_char in DIGITS + LETTERS:
                 return Tokens(TT_IDENTIFIER, id_str, self.pos.copy(), self.pos.copy().advance(len(id_str)))
 
-        
-            
+
 #################################################################################################
 #####   NODES
 #####   Nodes are the building blocks of the AST.
 #####   Nodes are the data structures that represent the code.
 #####   Nodes are the data structures that represent the code.
 #################################################################################################
-            
+
 class NumberNode:
         
         def __init__(self, token):
@@ -366,7 +354,7 @@ class NumberNode:
         
         def __repr__(self) -> str:
             return f'{self.token}'
-        
+
 class BinOpNode:
             
             def __init__(self, left_node, op_token, right_node):
@@ -380,84 +368,78 @@ class BinOpNode:
             
             def __repr__(self) -> str:
                 return f'({self.left_node}, {self.op_token}, {self.right_node})'
-            
-           
 
 
-        
-            
 class UnaryOpNode:
-                
-                def __init__(self, op_token, node):
-                    self.op_token = op_token
-                    self.node = node
 
-                    self.pos_start = self.op_token.pos_start
-                    self.pos_end = node.pos_end
+    def __init__(self, op_token, node):
+        self.op_token = op_token
+        self.node = node
 
-                
-                def __repr__(self) -> str:
-                    return f'({self.op_token}, {self.node})'
-                
+        self.pos_start = self.op_token.pos_start
+        self.pos_end = node.pos_end
 
-                
+    def __repr__(self) -> str:
+        return f'({self.op_token}, {self.node})'
+
+
 class VarAccessNode:
-                        
-                    def __init__(self, token):
-                            self.token = token
 
-                            self.pos_start = self.token.pos_start
-                            self.pos_end = self.token.pos_end
-                        
-                    def __repr__(self) -> str:
-                            return f'{self.token}'
-                        
+    def __init__(self, var_name_token):
+        self.token = var_name_token
 
-                    def create_ast(tokens):
-                        """
-                        Creates an abstract syntax tree (AST) from a list of tokens.
+        self.pos_start = self.var_name_token.pos_start
+        self.pos_end = self.var_name_token.pos_end
 
-                        Args:
-                            tokens (list): A list of tokens.
+    def __repr__(self) -> str:
+        return f"{self.var_name_token}"
 
-                        Returns:
-                            BinOpNode: The root node of the AST.
-                        """
+    def create_ast(tokens):
+        """
+        Creates an abstract syntax tree (AST) from a list of tokens.
 
-                        if len(tokens) == 0:
-                            return None
+        Args:
+            tokens (list): A list of tokens.
 
-                        root = tokens[0]
+        Returns:
+            BinOpNode: The root node of the AST.
+        """
 
-                        for i in range(len(tokens)):
-                            token = tokens[i]
-                            if token.type == TT_PLUS:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_MINUS:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_MUL:
-                                if i + 2 < len(tokens) and tokens[i + 2].type in (TT_PLUS, TT_MINUS):
-                                    # Wrap higher precedence operation in parentheses
-                                    root = BinOpNode(root, token, (tokens[i + 1], tokens[i + 2], tokens[i + 3]))
-                                else:
-                                    root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_DIV:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_POWER:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_INT:
-                                root = NumberNode(token)
-                            elif token.type == TT_FLOAT:
-                                root = NumberNode(token)
-                            elif token.type == TT_LPAREN:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            elif token.type == TT_RPAREN:
-                                root = BinOpNode(root, token, tokens[i + 1])
-                            else:
-                                raise Exception(f'Unknown token: {token}')
+        if len(tokens) == 0:
+            return None
 
-                        return root
-                    
+        root = tokens[0]
+
+        for i in range(len(tokens)):
+            token = tokens[i]
+            if token.type == TT_PLUS:
+                root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_MINUS:
+                root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_MUL:
+                if i + 2 < len(tokens) and tokens[i + 2].type in (TT_PLUS, TT_MINUS):
+                    # Wrap higher precedence operation in parentheses
+                    root = BinOpNode(
+                        root, token, (tokens[i + 1], tokens[i + 2], tokens[i + 3])
+                    )
+                else:
+                    root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_DIV:
+                root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_POWER:
+                root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_INT:
+                root = NumberNode(token)
+            elif token.type == TT_FLOAT:
+                root = NumberNode(token)
+            elif token.type == TT_LPAREN:
+                root = BinOpNode(root, token, tokens[i + 1])
+            elif token.type == TT_RPAREN:
+                root = BinOpNode(root, token, tokens[i + 1])
+            else:
+                raise Exception(f"Unknown token: {token}")
+
+        return root
 
 
 class VarAssignNode:
@@ -468,20 +450,18 @@ class VarAssignNode:
         self.pos_start = self.var_name_token.pos_start
         self.pos_end = self.value_node.pos_end
 
+
+
     def __repr__(self) -> str:
         return f'({self.var_name_token}, {self.value_node})'
 
 
-
-
-
-            
 #################################################################################################
 #####   PARSER
 #####   The parser takes the tokens and converts them into an AST.
 #####   The parser is also called a syntactic analyzer.
 #################################################################################################
-            
+
 # Updated Parser class with operator precedence
 
 class Parser:
@@ -649,15 +629,14 @@ class Parser:
             left = BinOpNode(left, op_token, right)
 
         return res.success(left)
-       
-        
+
 
 #################################################################################################
 #####   ERROR
 #####   The error class is used to handle errors.
 #####   The error class is used to handle errors.
 #################################################################################################
-               
+
 
 class Error:
     """
@@ -689,7 +668,8 @@ class Error:
         
     def __repr__(self) -> str:
         return f'{self.as_string()}'
-        
+
+
 class IllegalCharError(Error):
     """
     Error raised when an illegal character is encountered.
@@ -742,10 +722,6 @@ class RTError(Error):
      
     def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
-
-
-
-
 
 
 #################################################################################################
@@ -810,14 +786,14 @@ class Position:
             str: The string representation of the position.
         """
         return f'{self.idx}:{self.ln}:{self.col}:{self.fn}:{self.ftxt}'
-        
- 
+
+
 #################################################################################################
 #####   PARSE RESULT
 #####   The parse result is a data structure that contains the result of the parse.
 #####   The parse result is a data structure that contains the result of the parse.
 #################################################################################################
-        
+
 class ParseResult:
     """
     Represents the result of a parsing operation.
@@ -837,9 +813,13 @@ class ParseResult:
         self.advance_count += 1
     
     def register(self, res):
-        self.advance_count += res.advance_count
-        if res.error: self.error = res.error
-        return res.node
+        if res is not None:
+            self.advance_count += res.advance_count
+            if res.error: self.error = res.error
+            elif not self.error and not self.node: self.node = res.node
+        # self.advance_count += res.advance_count
+        # if res.error: self.error = res.error
+        # return res.node
     
     def success(self, node):
         self.node = node
@@ -849,13 +829,13 @@ class ParseResult:
         if not self.error or self.advance_count == 0:
             self.error = error
         return self
-    
+
 #################################################################################################
 #####   RUNTIME RESULT
 #####   The runtime result is a data structure that contains the result of the runtime.
 #####   The runtime result is a data structure that contains the result of the runtime.
 #################################################################################################
-    
+
 class RuntimeResult:
     """
     Represents the result of a runtime operation.
@@ -886,18 +866,13 @@ class RuntimeResult:
     
     def __repr__(self) -> str:
         return f'{self.value}, {self.error}'
-    
 
-    
 
 #################################################################################################
 #####      VALUES
 #####      The values are the data types that the interpreter can handle.
 #####      The values are the data types that the interpreter can handle.
 #################################################################################################
-    
-
-
 
 
 class Number:
@@ -934,9 +909,8 @@ class Number:
         
     def __repr__(self):
         return str(self.value)
-    
 
-    
+
 class String:
     def __init__(self, value):
         self.value = value
@@ -947,7 +921,7 @@ class String:
         
     def __repr__(self):
         return f'"{self.value}"'
-    
+
 class List:
     def __init__(self, elements):
         self.elements = elements
@@ -990,7 +964,7 @@ class List:
     
     def __repr__(self):
         return f'[{", ".join([str(x) for x in self.elements])}]'
-    
+
 class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
@@ -998,7 +972,7 @@ class SymbolTable:
     
     def get(self, name):
         value = self.symbols.get(name, None)
-        if value is None and self.parent:
+        if value == None and self.parent:
             return self.parent.get(name)
         return value
     
@@ -1010,12 +984,8 @@ class SymbolTable:
     
     def __repr__(self):
         return f'{self.symbols}'
-    
-
-    
 
 
-    
 class BaseFunction:
     def __init__(self, name):
         self.name = name or '<anonymous>'
@@ -1057,7 +1027,7 @@ class BaseFunction:
         if res.error: return res
         self.populate_args(arg_names, args, exec_ctx)
         return res.success(None)
-    
+
 class Function(BaseFunction):
     def __init__(self, name, body_node, arg_names):
         super().__init__(name)
@@ -1084,7 +1054,7 @@ class Function(BaseFunction):
     
     def __repr__(self):
         return f'<function {self.name}>'
-    
+
 class BuiltInFunction(BaseFunction):
     def __init__(self, name):
         super().__init__(name)
@@ -1170,12 +1140,6 @@ class BuiltInFunction(BaseFunction):
             ))
         list_.elements.append(value)
         return RuntimeResult().success(Number.null)
-    
-
-
-
-    
-
 
 
 #################################################################################################
@@ -1183,7 +1147,7 @@ class BuiltInFunction(BaseFunction):
 #####   The context is the environment in which the interpreter executes the code.
 #####   The context is the environment in which the interpreter executes the code.
 #################################################################################################
-    
+
 class Context:
     """
     The context class is used to store variables.
@@ -1236,19 +1200,14 @@ class Context:
             str: The string representation of the context.
         """
         return f'{self.symbol_table}'
-    
-    
 
-        
-
-    
 
 #################################################################################################
 #####   INTERPRETER
 #####   The interpreter takes the AST and executes the code.
 #####   The interpreter takes the AST and executes the code.
 #################################################################################################
-    
+
 class Interpreter:
     """
     The interpreter class is used to interpret the AST.
@@ -1478,19 +1437,14 @@ class Interpreter:
             int or float: The result of interpreting the AST.
         """
         return self.visit(node)
-    
 
 
-
-    
-
-    
 #################################################################################################
 #####   RUN
 #####   The run function is the main function of the interpreter.
 #####   The run function is the main function of the interpreter.
 #################################################################################################
-    
+
 global_symbol_table = SymbolTable()
 global_symbol_table.set("NULL", Number(0))
 
