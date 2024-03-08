@@ -940,9 +940,6 @@ class Number:
         self.pos_end = pos_end
         return self
     
-    def null(self):
-        return self.value == 0
-    
 
     def added_to(self, other):
         if isinstance(other, Number):
@@ -1291,13 +1288,9 @@ class Interpreter:
         Returns:
             Any: The result of interpreting the node.
         """
-        if node is None:
-            return RuntimeResult().success(Number.null)
-        method = getattr(self, 'visit_' + type(node).__name__, self.no_visit_method)
+        method_name = f'visit_{type(node).__name__}'
+        method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
-        # method_name = f'visit_{type(node).__name__}'
-        # method = getattr(self, method_name, self.no_visit_method)
-        # return method(node, context)
     
 
     
@@ -1480,7 +1473,7 @@ class Interpreter:
     #     elif node.op_token.type == TT_MINUS:
     #         return -self.visit(node.node)
 
-    def no_visit_method(self, node, context=None):
+    def no_visit_method(self, node):
         """
         Raises an exception if no visit method is found for a node.
 

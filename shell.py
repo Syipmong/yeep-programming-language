@@ -1,7 +1,7 @@
 import yeep
 
-print("Yeep Programming Language")
-print("Programme Written and Developed by Yipmong Said")
+print("\t\t\t\t\tYeep Programming Language")
+print("\t\t\t\tProgramme Written and Developed by Yipmong Said")
 while True:
     text = input("yeep >> ")
     print(text)
