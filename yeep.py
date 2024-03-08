@@ -863,6 +863,7 @@ class ParseResult:
         self.error = None
         self.node = None
         self.advance_count = 0
+
     
     def register_advancement(self):
         self.advance_count += 1
@@ -872,9 +873,9 @@ class ParseResult:
             self.advance_count += res.advance_count
             if res.error: self.error = res.error
             elif not self.error and not self.node: self.node = res.node
-        # self.advance_count += res.advance_count
-        # if res.error: self.error = res.error
-        # return res.node
+        self.advance_count += res.advance_count
+        if res.error: self.error = res.error
+        return res.node
     
     def success(self, node):
         self.node = node
