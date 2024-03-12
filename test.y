@@ -2,6 +2,9 @@ func test(a){
     print(Hello)
 }
 
+def test(n):
+    print(n)
+
 int test(n){
     return n
 }

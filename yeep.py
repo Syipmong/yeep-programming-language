@@ -257,12 +257,16 @@ class Lexer:
             elif self.current_char == '=':
                 tokens.append(self.make_equals())
                 self.advance()
+            elif self.current_char == '^':
+                tokens.append(Tokens(TT_POWER, pos_start= self.pos))
+                self.advance()
             elif self.current_char == '(':
                 tokens.append(Tokens(TT_LPAREN, pos_start= self.pos))
                 self.advance()
             elif self.current_char == ')':
                 tokens.append(Tokens(TT_RPAREN, pos_start= self.pos))
                 self.advance()
+
             else:
                 pos_start = self.pos.copy()
                 char = self.current_char
@@ -343,7 +347,6 @@ class Lexer:
     def check_keyword(self, id_str):
         """
         Check whether `id_str` matches a keyword. If it does, consume the rest of the word and return a keyword token.
-        Check whether `id_str` matches a keyword. If it does, consume the rest of the word and return a keyword token.
         """
         if self.pos.i + len(id_str) < len(self.text):
             next_char = self.text[self.pos.i + len(id_str)]
@@ -354,7 +357,6 @@ class Lexer:
 #################################################################################################
 #####   NODES
 #####   Nodes are the building blocks of the AST.
-#####   Nodes are the data structures that represent the code.
 #####   Nodes are the data structures that represent the code.
 #################################################################################################
 
@@ -493,38 +495,38 @@ class Parser:
         self.current_token = self.tokens[self.token_index] if self.token_index < len(self.tokens) else None
 
     def atom(self):
-        """
-        Parses an atom expression and returns the corresponding parse tree node.
-        """
-        res = ParseResult()
-        # If it starts with a parenthesis, it should be a parenthesis expression
-        token = self.current_token
+            res = ParseResult()
+            token = self.current_token
 
-        if token.type in (TT_INT, TT_FLOAT):
-            res.register(self.advance())
-            return res.success(NumberNode(token))
-        elif token.type == TT_IDENTIFIER:
-            res.register(self.advance())
-            return res.success(VarAccessNode(token))
-        
-        elif token.type == TT_LPAREN:
-            res.register(self.advance())
-            expr = res.register(self.expr())
-            if res.error:
-                return res
-            if self.current_token.type == TT_RPAREN:
-                res.register(self.advance())
-                return res.success(expr)
-            else:
-                return res.failure(InvalidSyntaxError(
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    "Expected ')'"
-                ))
-        return res.failure(InvalidSyntaxError(
-            token.pos_start, token.pos_end,
-            "Expected int or float"
-        ))
+            if token.type in (TT_INT, TT_FLOAT):
+                res.register_advancement()
+                self.advance()
+                return res.success(NumberNode(token))
 
+            elif token.type == TT_IDENTIFIER:
+                res.register_advancement()
+                self.advance()
+                return res.success(VarAccessNode(token))
+
+            elif token.type == TT_LPAREN:
+                res.register_advancement()
+                self.advance()
+                expr = res.register(self.expr())
+                if res.error: return res
+                if self.current_token.type == TT_RPAREN:
+                    res.register_advancement()
+                    self.advance()
+                    return res.success(expr)
+                else:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_token.pos_start, self.current_token.pos_end,
+                        "Expected ')'"
+                    ))
+
+            return res.failure(InvalidSyntaxError(
+                token.pos_start, token.pos_end,
+                "Expected int, float, identifier, '+', '-' or '('"
+            ))
 
     def parse(self):
         """
@@ -625,33 +627,70 @@ class Parser:
 	# 		))
 
 	# 	return res.success(node)
-
+    
     def expr(self):
-        """
-        Parses an expression and returns the corresponding parse tree node.
-        """
-        res = ParseResult()
-        if self.current_token.matches(TT_KEYWORD, 'VAR'):
-            res.register(self.advance())  # Advance to VAR keyword
-            if self.current_token.type != TT_IDENTIFIER:
-                res.failure(InvalidSyntaxError(
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    f'Expected identifier'
-                ))
-            var_name = self.current_token
-            
-            res.register(self.advance())  # Advance to identifier
-            if self.current_token is not None and TT_EQ is not None:
-                if not self.current_token.matches(TT_EQ):
-                    res.failure(InvalidSyntaxError(
+            res = ParseResult()
+
+            if self.current_token.matches(TT_KEYWORD, 'VAR'):
+                res.register_advancement()
+                self.advance()
+
+                if self.current_token.type != TT_IDENTIFIER:
+                    return res.failure(InvalidSyntaxError(
                         self.current_token.pos_start, self.current_token.pos_end,
-                        f'Expected ='
+                        "Expected identifier"
                     ))
-                    res.register(self.advance())  # Advance to equals sign
-                    exp = res.register(self.expr())  # Advance to expression
-                    if res.error: return res
-                return res.success(VarAssignNode(var_name, exp))
-        return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
+                var_name = self.current_token
+                res.register_advancement()
+                self.advance()
+
+                if self.current_token.type != TT_EQ:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_token.pos_start, self.current_token.pos_end,
+                        "Expected '='"
+                    ))
+
+                res.register_advancement()
+                self.advance()
+                expr = res.register(self.expr())
+                if res.error: return res
+                return res.success(VarAssignNode(var_name, expr))
+            node = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+
+            if res.error:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected 'VAR', int, float, identifier, '+', '-' or '('"
+                ))
+
+            return res.success(node)
+
+    # def expr(self):
+    #     """
+    #     Parses an expression and returns the corresponding parse tree node.
+    #     """
+    #     res = ParseResult()
+    #     if self.current_token.matches(TT_KEYWORD, 'VAR'):
+    #         res.register(self.advance())  # Advance to VAR keyword
+    #         if self.current_token.type != TT_IDENTIFIER:
+    #             res.failure(InvalidSyntaxError(
+    #                 self.current_token.pos_start, self.current_token.pos_end,
+    #                 f'Expected identifier'
+    #             ))
+    #         var_name = self.current_token
+            
+    #         res.register(self.advance())  # Advance to identifier
+    #         if self.current_token is not None and TT_EQ is not None:
+    #             if not self.current_token.matches(TT_EQ):
+    #                 res.failure(InvalidSyntaxError(
+    #                     self.current_token.pos_start, self.current_token.pos_end,
+    #                     f'Expected ='
+    #                 ))
+    #                 res.register(self.advance())  # Advance to equals sign
+    #                 exp = res.register(self.expr())  # Advance to expression
+    #                 if res.error: return res
+    #             return res.success(VarAssignNode(var_name, exp))
+    #     return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
             # if res.error:
             #     return res
 
@@ -665,10 +704,12 @@ class Parser:
 
         # return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
 
-    def bin_op(self, func_a, ops, func_b):
+    def bin_op(self, func_a, ops, func_b=None):
         """
         Parses a binary operation expression and returns the corresponding parse tree node.
         """
+        if func_b == None:
+            func_b = func_a
         res = ParseResult()
         left = res.register(func_a())
         if res.error:
@@ -869,10 +910,6 @@ class ParseResult:
         self.advance_count += 1
     
     def register(self, res):
-        if res is not None:
-            self.advance_count += res.advance_count
-            if res.error: self.error = res.error
-            elif not self.error and not self.node: self.node = res.node
         self.advance_count += res.advance_count
         if res.error: self.error = res.error
         return res.node
@@ -1028,6 +1065,7 @@ class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
         self.parent = parent
+        
     
     def get(self, name):
         value = self.symbols.get(name, None)
@@ -1226,6 +1264,7 @@ class Context:
         self.parent_entry_pos = parent_entry_pos
         self.symbol_table = {}
 
+
     def get(self, var_name):
         """
         Gets the value of a variable.
@@ -1237,7 +1276,7 @@ class Context:
             Any: The value of the variable.
         """
         value = self.symbol_table.get(var_name, None)
-        if value is None and self.parent:
+        if value == None and self.parent:
             return self.parent.get(var_name)
         return value
 
@@ -1377,9 +1416,9 @@ class Interpreter:
             Any: The value of the variable.
         """
         res = RuntimeResult()
-        var_name = node.token.value
+        var_name = node.var_name_token.value
         value = context.symbol_table.get(
-            var_name,
+            var_name
         )
         if value is None:
             return res.failure(RTError(
@@ -1513,7 +1552,7 @@ class Interpreter:
 #################################################################################################
 
 global_symbol_table = SymbolTable()
-global_symbol_table.set("NULL", Number(0))
+global_symbol_table.set("null", Number(0))
 
 
 def run(fn, text):
@@ -1544,4 +1583,4 @@ def run(fn, text):
     context = Context("<program>")
     context.symbol_table = global_symbol_table
     result = interpreter.visit(ast.node, context)
-    return result
+    return result.value, result.error
