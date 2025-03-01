@@ -1,34 +1,59 @@
-<program>      ::= <statement_list>
+statements  : NEWLINE* statement (NEWLINE+ statement)* NEWLINE*
 
-<statement_list> ::= <statement> | <statement> ';' <statement_list>
+statement		: KEYWORD:RETURN expr?
+						: KEYWORD:CONTINUE
+						: KEYWORD:BREAK
+						: expr
 
-<statement>     ::= <expression>
+expr        : KEYWORD:VAR IDENTIFIER EQ expr
+            : comp-expr ((KEYWORD:AND|KEYWORD:OR) comp-expr)*
 
-<expression>    ::= <term> | <term> <add_op> <expression>
+comp-expr   : NOT comp-expr
+            : arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
 
+arith-expr  :	term ((PLUS|MINUS) term)*
 
-<term>          ::= <factor> | <factor> <mul_op> <term>
+term        : factor ((MUL|DIV) factor)*
 
-<factor>        ::= <integer> | <float> | '(' <expression> ')' | <unary_op> <factor>
+factor      : (PLUS|MINUS) factor
+            : power
 
-<integer>       ::= [0-9]+
+power       : call (POW factor)*
 
-<float>         ::= [0-9]+ '.' [0-9]+
+call        : atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
 
-<add_op>        ::= '+' | '-'
+atom        : INT|FLOAT|STRING|IDENTIFIER
+            : LPAREN expr RPAREN
+            : list-expr
+            : if-expr
+            : for-expr
+            : while-expr
+            : func-def
 
-<mul_op>        ::= '*' | '/'
+list-expr   : LSQUARE (expr (COMMA expr)*)? RSQUARE
 
-<unary_op>      ::= '+' | '-'
+if-expr     : KEYWORD:IF expr KEYWORD:THEN
+              (statement if-expr-b|if-expr-c?)
+            | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
 
-In this grammar:
+if-expr-b   : KEYWORD:ELIF expr KEYWORD:THEN
+              (statement if-expr-b|if-expr-c?)
+            | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
 
-<program> represents a complete program.
-<statement_list> is a list of statements separated by semicolons.
-<statement> represents a single statement, which, in this case, is an expression.
-<expression> represents an arithmetic expression.
-<term> represents a term in the expression.
-<factor> represents a factor in the expression, which can be an integer, a float, a parenthesized expression, or a unary operation followed by a factor.
-<integer> and <float> represent integer and floating-point literals.
-<add_op> and <mul_op> represent addition/subtraction and multiplication/division operators.
-<unary_op> represents unary operators like positive or negative.
+if-expr-c   : KEYWORD:ELSE
+              statement
+            | (NEWLINE statements KEYWORD:END)
+
+for-expr    : KEYWORD:FOR IDENTIFIER EQ expr KEYWORD:TO expr 
+              (KEYWORD:STEP expr)? KEYWORD:THEN
+              statement
+            | (NEWLINE statements KEYWORD:END)
+
+while-expr  : KEYWORD:WHILE expr KEYWORD:THEN
+              statement
+            | (NEWLINE statements KEYWORD:END)
+
+func-def    : KEYWORD:FUN IDENTIFIER?
+              LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+              (ARROW expr)
+            | (NEWLINE statements KEYWORD:END)
