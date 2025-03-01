@@ -1,5 +1,6 @@
 #######################################
 # IMPORTS
+
 #######################################
 
 from arrow_strings import *
@@ -70,6 +71,7 @@ class RTError(Error):
 
 #######################################
 # POSITION
+
 #######################################
 
 class Position:
@@ -92,10 +94,58 @@ class Position:
 
   def copy(self):
     return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+"""
+This file contains the implementation of a simple programming language interpreter.
+The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
 
-#######################################
-# TOKENS
-#######################################
+To use this interpreter:
+1. Create a file called yeep.py
+2. Copy the code below into the file
+3. Run the file with python3 yeep.py
+4. Type in an expression like 2 + 2 and press enter
+5. The interpreter will print the result of the expression
+
+Tokens:
+- TT_PLUS: Represents the plus operator '+'
+- TT_MINUS: Represents the minus operator '-'
+- TT_DIV: Represents the division operator '/'
+- TT_MUL: Represents the multiplication operator '*'
+- TT_LPAREN: Represents the left parenthesis '('
+- TT_RPAREN: Represents the right parenthesis ')'
+- TT_INT: Represents an integer number
+- TT_FLOAT: Represents a floating-point number
+- TT_EOF: Represents the end of the file
+
+Classes:
+- Tokens: Represents a token with a type and optional value
+- Lexer: Converts source code into tokens
+- NumberNode: Represents a number in the abstract syntax tree (AST)
+- BinOpNode: Represents a binary operation in the AST
+- UnaryOpNode: Represents a unary operation in the AST
+- VarAccessNode: Represents a variable access in the AST
+- Parser: Converts tokens into an AST
+- Error: Base class for different types of errors
+- IllegalCharError: Represents an error for encountering an illegal character
+- InvalidSyntaxError: Represents an error for encountering invalid syntax
+- ExpectedTokenError: Represents an error for expecting a specific token
+- Position: Represents the position of a character in the source code
+"""
+"""
+This file contains the implementation of a simple programming language interpreter.
+The interpreter includes a lexer, parser, and AST nodes for performing arithmetic operations.
+"""
+
+################################################################################################
+#####                     THIS IS WHERE WE WRITE THE PROGRAM INSTRUCTIONS                  #####
+################################################################################################
+
+
+#################################################################################################
+#####   TOKENS
+#####   Tokens are the smallest unit of a program that have meaning.
+#####   Tokens are the words and symbols that make up a program.
+#################################################################################################
+
 
 TT_INT				= 'INT'
 TT_FLOAT    	= 'FLOAT'
@@ -163,12 +213,24 @@ class Token:
     if self.value: return f'{self.type}:{self.value}'
     return f'{self.type}'
 
-#######################################
-# LEXER
-#######################################
+#################################################################################################
+#####   LEXER
+#####   The lexer takes the source code and converts it into tokens.
+#####   The lexer is also called a tokenizer or scanner.
+#################################################################################################
 
 class Lexer:
+  """
+    Lexer class for tokenizing input text.
+  """
   def __init__(self, fn, text):
+    """
+        Initialize the Lexer object.
+
+        Parameters:
+        - fn (str): The filename or filepath associated with the input text.
+        - text (str): The input text to be tokenized.
+    """
     self.fn = fn
     self.text = text
     self.pos = Position(-1, 0, -1, fn, text)
@@ -176,10 +238,20 @@ class Lexer:
     self.advance()
   
   def advance(self):
+    """
+        Advance the current character pointer to the next character in the input text.
+    """
     self.pos.advance(self.current_char)
     self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
   def make_tokens(self):
+    """
+        Tokenize the input text and return a list of tokens.
+
+        Returns:
+        - tokens (list): A list of tokens.
+        - error (Exception or None): An error message if encountered during tokenization, or None if no error occurred.
+    """
     tokens = []
 
     while self.current_char != None:
@@ -245,6 +317,12 @@ class Lexer:
     return tokens, None
 
   def make_number(self):
+    """
+        Tokenize a number and return the corresponding token.
+
+        Returns:
+        - token (Tokens): The token representing the number.
+    """
     num_str = ''
     dot_count = 0
     pos_start = self.pos.copy()
@@ -287,6 +365,12 @@ class Lexer:
     return Token(TT_STRING, string, pos_start, self.pos)
 
   def make_identifier(self):
+    """
+        Tokenize an identifier and return the corresponding token.
+
+        Returns:
+        - token (Tokens): The token representing the identifier.
+    """
     id_str = ''
     pos_start = self.pos.copy()
 
@@ -309,6 +393,9 @@ class Lexer:
     return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
   def make_not_equals(self):
+    """
+        Tokenize a not equals sign and return the corresponding token.
+    """
     pos_start = self.pos.copy()
     self.advance()
 
@@ -320,6 +407,12 @@ class Lexer:
     return None, ExpectedCharError(pos_start, self.pos, "'=' (after '!')")
   
   def make_equals(self):
+    """
+        Tokenize an equals sign and return the corresponding token.
+
+        Returns:
+        - token (Tokens): The token representing the equals sign.
+    """
     tok_type = TT_EQ
     pos_start = self.pos.copy()
     self.advance()
@@ -353,6 +446,9 @@ class Lexer:
     return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
   def skip_comment(self):
+    """
+        Skip a comment until the end of the line.
+    """
     self.advance()
 
     while self.current_char != '\n':
@@ -360,9 +456,11 @@ class Lexer:
 
     self.advance()
 
-#######################################
-# NODES
-#######################################
+#################################################################################################
+#####   NODES
+#####   Nodes are the building blocks of the AST.
+#####   Nodes are the data structures that represent the code.
+#################################################################################################
 
 class NumberNode:
   def __init__(self, tok):
@@ -540,9 +638,11 @@ class ParseResult:
       self.error = error
     return self
 
-#######################################
-# PARSER
-#######################################
+#################################################################################################
+#####   PARSER
+#####   The parser takes the tokens and converts them into an AST.
+#####   The parser is also called a syntactic analyzer.
+#################################################################################################
 
 class Parser:
   def __init__(self, tokens):
@@ -551,6 +651,9 @@ class Parser:
     self.advance()
 
   def advance(self):
+    """
+        Advances the token index and sets the current_token attribute to the next token in the list of tokens.
+    """
     self.tok_idx += 1
     self.update_current_tok()
     return self.current_tok
@@ -565,6 +668,9 @@ class Parser:
       self.current_tok = self.tokens[self.tok_idx]
 
   def parse(self):
+    """
+        Parses the tokens and returns the resulting parse tree.
+    """
     res = self.statements()
     if not res.error and self.current_tok.type != TT_EOF:
       return res.failure(InvalidSyntaxError(
@@ -712,6 +818,9 @@ class Parser:
     return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
   def factor(self):
+    """
+        Parses a factor expression and returns the corresponding parse tree node.
+    """
     res = ParseResult()
     tok = self.current_tok
 
@@ -725,6 +834,9 @@ class Parser:
     return self.power()
 
   def power(self):
+    """
+        Parses a power expression and returns the corresponding parse tree node.
+    """
     return self.bin_op(self.call, (TT_POW, ), self.factor)
 
   def call(self):
@@ -1232,6 +1344,9 @@ class Parser:
   ###################################
 
   def bin_op(self, func_a, ops, func_b=None):
+    """
+        Parses a binary operation expression and returns the corresponding parse tree node.
+    """
     if func_b == None:
       func_b = func_a
     
@@ -1248,10 +1363,26 @@ class Parser:
       left = BinOpNode(left, op_tok, right)
 
     return res.success(left)
+  
+#################################################################################################
+#####   ERROR
+#####   The error class is used to handle errors.
+#################################################################################################
 
 #######################################
-# RUNTIME RESULT
+##### RUNTIME RESULT
+##### The Runtime Result is 
 #######################################
+
+"""
+    Represents an error that occurred during the execution of a program.
+    
+    Attributes:
+        pos_start (Position): The starting position of the error.
+        pos_end (Position): The ending position of the error.
+        error_name (str): The name of the error.
+        details (str): Additional details about the error.
+"""
 
 class RTResult:
   def __init__(self):

@@ -665,8 +665,6 @@ class Parser:
 
             return res.success(node)
 
-    z
-
     def bin_op(self, func_a, ops, func_b=None):
         """
         Parses a binary operation expression and returns the corresponding parse tree node.
