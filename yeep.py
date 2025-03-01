@@ -665,44 +665,7 @@ class Parser:
 
             return res.success(node)
 
-    # def expr(self):
-    #     """
-    #     Parses an expression and returns the corresponding parse tree node.
-    #     """
-    #     res = ParseResult()
-    #     if self.current_token.matches(TT_KEYWORD, 'VAR'):
-    #         res.register(self.advance())  # Advance to VAR keyword
-    #         if self.current_token.type != TT_IDENTIFIER:
-    #             res.failure(InvalidSyntaxError(
-    #                 self.current_token.pos_start, self.current_token.pos_end,
-    #                 f'Expected identifier'
-    #             ))
-    #         var_name = self.current_token
-            
-    #         res.register(self.advance())  # Advance to identifier
-    #         if self.current_token is not None and TT_EQ is not None:
-    #             if not self.current_token.matches(TT_EQ):
-    #                 res.failure(InvalidSyntaxError(
-    #                     self.current_token.pos_start, self.current_token.pos_end,
-    #                     f'Expected ='
-    #                 ))
-    #                 res.register(self.advance())  # Advance to equals sign
-    #                 exp = res.register(self.expr())  # Advance to expression
-    #                 if res.error: return res
-    #             return res.success(VarAssignNode(var_name, exp))
-    #     return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
-            # if res.error:
-            #     return res
-
-            # equals_sign = self.current_token
-            # exp = res.register(self.advance())  # Advance to equals sign
-        #     val = res.register(self.expr())  # Advance to expression
-
-        #     if res.error:
-        #         return res
-        #     return res.success(VarAssignNode(var_name, val))
-
-        # return self.bin_op(self.term, (TT_PLUS, TT_MINUS), self.term)
+    z
 
     def bin_op(self, func_a, ops, func_b=None):
         """
