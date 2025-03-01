@@ -1,16 +1,16 @@
 project_info = {
-    "name": "yeep.py",
+    "name": "yeep interpreted language",
     "description": "A project for building a programming language",
     "author": "Yipmong Said",
-    "version": "0",
-    "license": "MIT",
+    "version": "1.0.0",
+    "license": " ",
     "url": " ",
     "keywords": ["programming", "language", "compiler", "interpreter", "yeep"],
     "classifiers": [
-        "Development Status :: 1 - Planning",
+        "Development Status :: Alpha",
         "Intended Audience :: Developers",
-        "Topic :: Software Development :: Compilers",
-        "License :: OSI Approved :: MIT License",
+        "Topic :: Software Development :: Interpreter",
+        "License :: Null :: MIT License",
         "Programming Language :: Python :: 3.9"
     ],
     "install_requires": [

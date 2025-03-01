@@ -1,18 +1,18 @@
-import yeep
+import main
 
 print("\t\t\t\t\tYeep Programming Language")
 print("\t\t\t\tProgramme Written and Developed by Yipmong Said")
 
-# print("\t\t\t\t\t Copyright 2024 All Rights Reserved")
-while True:
-    text = input("yeep >> ")
-    print(text)
-    result = yeep.run("<stdin>", text)
 
-    if isinstance(result, list):
-        for error in result:
-            print(error.as_string())
-    else:
-        print(result)
-    if text == "exit()":
-        break
+while True:
+	text = input('yeep > ')
+	if text.strip() == "": continue
+	result, error = main.run('<stdin>', text)
+
+	if error:
+		print(error.as_string())
+	elif result:
+		if len(result.elements) == 1:
+			print(repr(result.elements[0]))
+		else:
+			print(repr(result))
