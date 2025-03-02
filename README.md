@@ -18,12 +18,34 @@ To get started with Yeep, follow these steps:
 2. **Hello World**: Create a new file with the `.yeep` extension and write your first "Hello, World!" program.
 3. **Run**: Use the Yeep compiler to run your program and see the output.
 
-## Example
+## Interactive Session
 
-Here is a simple example of a Yeep program:
+Below is an example of an interactive session with the Yeep programming language:
 
 ```yeep
-print("Hello, World!")
+yeep > FUN add(a, b) -> a + b * 5
+<function add>
+yeep > add(4, 2)
+14
+yeep > VAR myFun = someFun(a) -> a
+Invalid Syntax: Token cannot appear after previous tokens
+File <stdin>, line 1
+
+VAR myFun = someFun(a) -> a
+                      ^^
+yeep > VAR myFun = someFun(a) -> a + 2
+Invalid Syntax: Token cannot appear after previous tokens
+File <stdin>, line 1
+
+VAR myFun = someFun(a) -> a + 2
+                      ^^
+yeep > FUN add(a) -> a
+<function add>
+yeep > VAR someFun = add
+<function add>
+yeep > someFun(5)
+5
+yeep > FUN (c, d) -> c + d
 ```
 
 ## Documentation

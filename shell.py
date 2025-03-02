@@ -1,4 +1,4 @@
-import main
+import yeep
 
 print("\t\t\t\t\tYeep Programming Language")
 print("\t\t\t\tProgramme Written and Developed by Yipmong Said")
@@ -7,7 +7,7 @@ print("\t\t\t\tProgramme Written and Developed by Yipmong Said")
 while True:
 	text = input('yeep > ')
 	if text.strip() == "": continue
-	result, error = main.run('<stdin>', text)
+	result, error = yeep.run('<stdin>', text)
 
 	if error:
 		print(error.as_string())
